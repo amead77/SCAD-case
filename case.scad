@@ -1,3 +1,17 @@
+/*
+so... when I first created this (about 2 years prior) I had not long started with openscad and I stopped
+creating this because I just ran out of steam before creating the latches.
+I posted it to reddit in its current state and people liked it, but no one was offering
+to assist, so I removed it.
+The reason I created it is the same reason I've come back to it. Autodesk Fusion 360....
+You can get some really good fusion models including the design files (.f3d), but Autodesk have
+gone and locked the configurator behind a paywall, where it used to be free for hobby use. 
+So I'm back to openscad to create my own. Except, I still don't have the energy to sit down
+with this. 
+
+
+*/
+
 //0 for base, 1 for corner poly, 2 for hinge poly, 3 for both (debug), 4 for latches, 5 for top
 run = 0; 
 //x,y size
@@ -25,12 +39,19 @@ shTopCorner = [[0,0], [wt * 2,0], [wt * 3,wt], [wt * 3,bh-10], [(wt * 3)+2, bh-8
 
 shBaseSupport = [[wt * 2,0], [wt * 3,0], [wt * 4,wt], [wt * 4,bh], [(wt * 3)+2, bh], [(wt * 3)+2, bh-8], [(wt * 3), bh-8], [wt * 3, wt * 2], [wt, base_thickness], [0, base_thickness], [0,0]];
 
+//these are actually the latch external parts.
 shBaseLatches = [[wt * 2,0], [wt * 3,0], [wt * 4,wt], [(wt * 4)+5, bh-15], [(wt * 4)+5, bh], [wt * 4,bh], [(wt * 3)+2, bh], [(wt * 3)+2, bh-8], [(wt * 3), bh-8], [wt * 3, wt * 2], [wt, base_thickness], [0, base_thickness], [0,0]];
 
 //shBaseHinge is the main part of the hinge, minus the actual hingey round bits :|
 shBaseHinge = [[(wt * 4), bh], [((wt * 4)+10), bh], [((wt * 4)+10), (bh-2)], [(wt * 3), (wt * 2)], [(wt * 4), bh]];
 
 //tried setting a variable 'shcorner' to either shTopCorner or shBaseCorner depending on 'run'. kept doing the corners but not the sides no matter what I tried. so module base_sides() got doubled up on the ifs instead
+
+///////////////////come back to here
+//lets do a massive cludge :)
+cLatchBetweenHoles = 20.0;
+cLatchWidth = 19.5;
+
 
 module bcorners() {
     if ((run == 0) || (run == 2) || (run == 3)) {
