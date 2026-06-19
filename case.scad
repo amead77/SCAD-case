@@ -1,19 +1,30 @@
 /*
+2024
 so... when I first created this (about 2 years prior) I had not long started with openscad and I stopped
 creating this because I just ran out of steam before creating the latches.
 I posted it to reddit in its current state and people liked it, but no one was offering
-to assist, so I removed it.
+to assist, so I removed it, then abandoned the whole thing as others did a better job.
 The reason I created it is the same reason I've come back to it. Autodesk Fusion 360....
 You can get some really good fusion models including the design files (.f3d), but Autodesk have
 gone and locked the configurator behind a paywall, where it used to be free for hobby use. 
-So I'm back to openscad to create my own. Except, I still don't have the energy to sit down
-with this. 
 
+2026
+I've returned to it because I found a good one, but a) no handles, and b) creating a 80mm 
+tall base caused the latches to get clipped in half. Then I found another, but that had no handles 
+and other limitations. I found myself with no real option but to take another look at this.
+And... oh... I made some design *choices* didn't I.
+Literally no one else approached their versions like I have. Probably because they have sense.
 
 */
 
+/**
+//next 2 lines used only by my 'on save' script. can be ignored otherwise.
+//AUTO-V
+version = "v0.1-2026/06/19r23";
+**/
+
 //0 for base, 1 for corner poly, 2 for hinge poly, 3 for both (debug), 4 for latches, 5 for top, 7 for assembly
-run = 7; 
+run = "assembly"; //[assembly, base, top, latches, handle]
 //x,y size
 corner_distance = [100, 150]; 
 //muliples of nozzle size
@@ -33,17 +44,81 @@ sd = seal_depth;
 bh = base_height;
 wt = wall_thickness;
 
-shBaseCorner = [[0,0], [wt * 2,0], [wt * 3,wt], [wt * 3,bh-10], [(wt * 3)+2, bh-8], [(wt * 3)+2, bh], [(wt * 3)+1, bh], [(wt * 3)+1, (bh-sd)], [(wt * 2)+1, (bh-sd)], [(wt * 2)+1, bh], [wt * 2, bh], [wt * 2, wt * 2], [wt, base_thickness], [0, base_thickness], [0,0]];
+shBaseCorner = [
+    [0,0], 
+    [wt * 2,0], 
+    [wt * 3,wt], 
+    [wt * 3,bh-10], 
+    [(wt * 3)+2, bh-8], 
+    [(wt * 3)+2, bh], 
+    [(wt * 3)+1, bh], 
+    [(wt * 3)+1, (bh-sd)], 
+    [(wt * 2)+1, (bh-sd)], 
+    [(wt * 2)+1, bh], 
+    [wt * 2, bh], 
+    [wt * 2, wt * 2], 
+    [wt, base_thickness], 
+    [0, base_thickness], 
+    [0,0]
+];
 
-shTopCorner = [[0,0], [wt * 2,0], [wt * 3,wt], [wt * 3,bh-10], [(wt * 3)+2, bh-8], [(wt * 3)+2, bh], [(wt * 3)+0.9, bh], [(wt * 3)+0.3, (bh+(sd-1))], [(wt * 2)+1.5, (bh+(sd-1))], [(wt * 2)+1, bh], [wt * 2, bh], [wt * 2, wt * 2], [wt, base_thickness], [0, base_thickness], [0,0]];
+shTopCorner = [
+    [0,0], 
+    [wt * 2,0], 
+    [wt * 3,wt], 
+    [wt * 3,bh-10], 
+    [(wt * 3)+2, bh-8], 
+    [(wt * 3)+2, bh], 
+    [(wt * 3)+0.9, bh], 
+    [(wt * 3)+0.3, (bh+(sd-1))], 
+    [(wt * 2)+1.5, (bh+(sd-1))], 
+    [(wt * 2)+1, bh], 
+    [wt * 2, bh], 
+    [wt * 2, wt * 2], 
+    [wt, base_thickness], 
+    [0, base_thickness], 
+    [0,0]
+];
 
-shBaseSupport = [[wt * 2,0], [wt * 3,0], [wt * 4,wt], [wt * 4,bh], [(wt * 3)+2, bh], [(wt * 3)+2, bh-8], [(wt * 3), bh-8], [wt * 3, wt * 2], [wt, base_thickness], [0, base_thickness], [0,0]];
+shBaseSupport = [
+    [wt * 2,0], 
+    [wt * 3,0], 
+    [wt * 4,wt], 
+    [wt * 4,bh], 
+    [(wt * 3)+2, bh], 
+    [(wt * 3)+2, bh-8], 
+    [(wt * 3), bh-8], 
+    [wt * 3, wt * 2], 
+    [wt, base_thickness], 
+    [0, base_thickness], 
+    [0,0]
+];
 
 //these are actually the latch external parts.
-shBaseLatches = [[wt * 2,0], [wt * 3,0], [wt * 4,wt], [(wt * 4)+5, bh-15], [(wt * 4)+5, bh], [wt * 4,bh], [(wt * 3)+2, bh], [(wt * 3)+2, bh-8], [(wt * 3), bh-8], [wt * 3, wt * 2], [wt, base_thickness], [0, base_thickness], [0,0]];
+shBaseLatches = [
+    [wt * 2,0], 
+    [wt * 3,0], 
+    [wt * 4,wt], 
+    [(wt * 4)+5, bh-15], 
+    [(wt * 4)+5, bh], 
+    [wt * 4,bh], 
+    [(wt * 3)+2, bh],
+    [(wt * 3)+2, bh-8], 
+    [(wt * 3), bh-8], 
+    [wt * 3, wt * 2], 
+    [wt, base_thickness], 
+    [0, base_thickness], 
+    [0,0]
+];
 
 //shBaseHinge is the main part of the hinge, minus the actual hingey round bits :|
-shBaseHinge = [[(wt * 4), bh], [((wt * 4)+10), bh], [((wt * 4)+10), (bh-2)], [(wt * 3), (wt * 2)], [(wt * 4), bh]];
+shBaseHinge = [
+    [(wt * 4), bh], 
+    [((wt * 4)+10), bh], 
+    [((wt * 4)+10), (bh-2)], 
+    [(wt * 3), (wt * 2)], 
+    [(wt * 4), bh]
+];
 
 //tried setting a variable 'shcorner' to either shTopCorner or shBaseCorner depending on 'run'. kept doing the corners but not the sides no matter what I tried. so module base_sides() got doubled up on the ifs instead
 
@@ -292,7 +367,7 @@ Main
 render() {
     difference() {
         union() {
-            if ((run == 0) || (run == 5)) {
+            if (run == "base") {
                 union() {
                     base_corners(which = 0);
                     base_sides(which = 0);
@@ -301,6 +376,16 @@ render() {
                     base_latches();
                 }
             }
+            if (run == "top") {
+                union() {
+                    base_corners(which = 1);
+                    base_sides(which = 1);
+                    base_plate();
+                    base_hinge(which = 1);
+                    base_latches();
+                }
+            }
+/*
             if ((run == 1) || (run == 3)) {
                 polygon(shBaseCorner);
             }
@@ -316,7 +401,8 @@ render() {
             if (run == 6) {
                 base_corners(which = 1);
             }
-            if (run == 7) {
+*/            
+            if (run == "assembly") {
                 union() {
                     base_corners(which = 0);
                     base_sides(which = 0);
@@ -336,8 +422,13 @@ render() {
                         }
                     }
                 }
+            } //assembly
 
+            if (run == "latches") {
 
+            }
+
+            if (run == "handle") {
 
             }
         }
