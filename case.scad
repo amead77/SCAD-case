@@ -15,14 +15,14 @@ and other limitations. I found myself with no real option but to take another lo
 And... oh... I made some design *choices* didn't I.
 Literally no one else approached their versions like I have. Probably because they have sense.
 I tried getting copilot to create my latches and fix some issues. That branch got abandoned immediately
-as AI can't see what it is making. It can help you with syntax errors, some functions and stuff, but not
-create a model or part of.
+as AI can't see what it is making and successfully produced trash. 
+It can help you with syntax errors, some functions and stuff, but not create a model or part of.
 */
 
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/19r553";
+version = "v0.1-2026/06/19r563";
 **/
 
 use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -30,21 +30,21 @@ $fn = 32;
 //Choose part / Assembly view
 run = "assembly"; //[assembly, base, top, latches, handle, seal]
 //x,y size
-corner_distance = [250, 250]; 
+corner_distance = [100, 100]; 
 //muliples of nozzle size
 wall_thickness = 3.2;  //0.1
 //max 2x wall_thickness
 base_thickness = 4;  //0.1
 //height of base bottom (min 20mm or it weirds out)
-base_height = 100; //0.1
+base_height = 30; //0.1
 top_height = 20; //0.1
 //hinge hole size
-hinge_hole = 3.2; //0.1
+hinge_hole = 1.8; //0.1
 //thickness for outer hinge and 2x is inner hinge
 hinge_thickness = 4.0; //0.1
 hinge_clearance = 0.2; //0.1
 hinge_screw_len = 35; //0.1
-hinge_screw_dia = 3; //0.1
+hinge_screw_dia = 1.75; //0.1
 hinge_screw_head_dia = 6; //0.1
 hinge_screw_head_len = 4; //0.1
 //fudged for visualisation only
@@ -249,7 +249,7 @@ side_reinforce_first_offset = 10; // [4:1:60]
 side_reinforce_spacing = 0; 
 
 //visualisation of innards
-chopmodel = true; //[true, false];
+chopmodel = false; //[true, false];
 chopx = -0;
 chopy = -0;
 chopz = -1;
