@@ -20,11 +20,11 @@ Literally no one else approached their versions like I have. Probably because th
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/19r222";
+version = "v0.1-2026/06/19r227";
 **/
 
 //0 for base, 1 for corner poly, 2 for hinge poly, 3 for both (debug), 4 for latches, 5 for top, 7 for assembly
-run = "assembly"; //[assembly, base, top, latches, handle]
+run = "assembly"; //[assembly, base, top, latches, handle, seal]
 //x,y size
 corner_distance = [100, 150]; 
 //muliples of nozzle size
@@ -49,15 +49,15 @@ top_lip_z_angler = 2;
 //seal depth. This will always be -1 for the top (to allow 1mm seal)
 seal_depth = 2.2;
 //the width of the part at the case side
-seal_width_case = 3;
+//seal_width_case = 3;
 //the width of the part that sticks out
-seal_width_open = 2;
+seal_width_open = wall_thickness / 4;
 
 sd = seal_depth;
 bh = base_height;
 th = top_height;
 wt = wall_thickness;
-swc = seal_width_case;
+//swc = seal_width_case;
 swo = seal_width_open;
 
 
@@ -221,6 +221,10 @@ chop_width = 200;
 chop_height = 200;
 chop_depth = 200;
 
+/*
+Create a seal that fits in the top rim of the case base section. The top of the seal is chamfered to allow 
+the case top to revolve on it's hinge and drop onto it.
+*/
 module generate_seal() {
 
 }
@@ -530,6 +534,10 @@ render() {
 
             if (run == "handle") {
 
+            }
+
+            if (run == "seal") {
+                generate_seal();
             }
         }
 
