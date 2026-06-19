@@ -20,7 +20,7 @@ Literally no one else approached their versions like I have. Probably because th
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/19r254";
+version = "v0.1-2026/06/19r274";
 **/
 
 //0 for base, 1 for corner poly, 2 for hinge poly, 3 for both (debug), 4 for latches, 5 for top, 7 for assembly
@@ -47,9 +47,12 @@ top_lip_z = 8;
 top_lip_z_angler = 2;
 
 //seal depth. This will always be -1 for the top (to allow 1mm seal)
-seal_depth = 2.2;
+seal_depth = 1.5;
 //under or oversize the seal height by this much, for fitment/different materials
-seal_undersizing = -0.2;
+seal_undersizing_z = -0.2; //0.01
+seal_undersizing_inner = 0.05;//0.01
+seal_undersizing_outer = 0.05;//0.01
+
 //the width of the part at the case side
 //seal_width_case = 3;
 //the width of the part that sticks out
@@ -239,13 +242,13 @@ module generate_seal() {
 
     //profile of the seal. square base with chamfered top
     shSeal = [
-        [slot_inner, z_bottom],
-        [slot_outer, z_bottom],
-        [slot_outer, z_top],
-        [slot_outer - top_inset, z_top+seal_depth+seal_undersizing],
-        [slot_inner + top_inset, z_top+seal_depth+seal_undersizing],
-        [slot_inner, z_top],
-        [slot_inner, z_bottom]
+        [slot_inner+seal_undersizing_inner, z_bottom],
+        [slot_outer-seal_undersizing_outer, z_bottom],
+        [slot_outer-seal_undersizing_outer, z_top],
+        [slot_outer - top_inset, z_top+seal_depth+seal_undersizing_z],
+        [slot_inner + top_inset, z_top+seal_depth+seal_undersizing_z],
+        [slot_inner+seal_undersizing_inner, z_top],
+        [slot_inner+seal_undersizing_inner, z_bottom]
     ];
 
     module seal_corner() {
@@ -579,7 +582,7 @@ render() {
                     base_latches(which = 0);
                 }
 
-                translate([0, corner_distance.y, (top_height + base_height) + 8]) {
+                translate([0, corner_distance.y, (top_height + base_height) + 0]) {
                     rotate([180, 0, 0]) {
                         union() {
                             base_corners(which = 1);
@@ -590,7 +593,7 @@ render() {
                         }
                     }
                 }
-                translate([0, 0, 0.5]) {
+                translate([0, 0, 0.0]) {
                     generate_seal();
                 }
             } //assembly
