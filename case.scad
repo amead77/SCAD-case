@@ -20,7 +20,7 @@ Literally no one else approached their versions like I have. Probably because th
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/19r23";
+version = "v0.1-2026/06/19r109";
 **/
 
 //0 for base, 1 for corner poly, 2 for hinge poly, 3 for both (debug), 4 for latches, 5 for top, 7 for assembly
@@ -32,7 +32,8 @@ wall_thickness = 3.2;
 //max 2x wall_thickness
 base_thickness = 4; 
 //height of base bottom (min 20mm or it weirds out)
-base_height = 20;
+base_height = 30;
+top_height = 20;
 //hinge hole size
 hinge_hole = 2.6;
 //latch hole size
@@ -42,13 +43,19 @@ seal_depth = 2.2;
 
 sd = seal_depth;
 bh = base_height;
+th = top_height;
 wt = wall_thickness;
+
+//changing this affects the angle of the seal outer. use for printing support ease.
+base_lip_z = 10; 
+//same for top
+top_lip_z = 6;
 
 shBaseCorner = [
     [0,0], 
     [wt * 2,0], 
     [wt * 3,wt], 
-    [wt * 3,bh-10], 
+    [wt * 3,bh-base_lip_z], 
     [(wt * 3)+2, bh-8], 
     [(wt * 3)+2, bh], 
     [(wt * 3)+1, bh], 
@@ -66,19 +73,20 @@ shTopCorner = [
     [0,0], 
     [wt * 2,0], 
     [wt * 3,wt], 
-    [wt * 3,bh-10], 
-    [(wt * 3)+2, bh-8], 
-    [(wt * 3)+2, bh], 
-    [(wt * 3)+0.9, bh], 
-    [(wt * 3)+0.3, (bh+(sd-1))], 
-    [(wt * 2)+1.5, (bh+(sd-1))], 
-    [(wt * 2)+1, bh], 
-    [wt * 2, bh], 
+    [wt * 3,th-10], 
+    [(wt * 3)+2, th-top_lip_z], 
+    [(wt * 3)+2, th], 
+    [(wt * 3)+0.9, th], 
+    [(wt * 3)+0.3, (th+(sd-1))], 
+    [(wt * 2)+1.5, (th+(sd-1))], 
+    [(wt * 2)+1, th], 
+    [wt * 2, th], 
     [wt * 2, wt * 2], 
     [wt, base_thickness], 
     [0, base_thickness], 
     [0,0]
 ];
+
 
 shBaseSupport = [
     [wt * 2,0], 
@@ -86,13 +94,28 @@ shBaseSupport = [
     [wt * 4,wt], 
     [wt * 4,bh], 
     [(wt * 3)+2, bh], 
-    [(wt * 3)+2, bh-8], 
-    [(wt * 3), bh-8], 
+    [(wt * 3)+2, bh-base_lip_z], 
+    [(wt * 3), bh-base_lip_z], 
     [wt * 3, wt * 2], 
     [wt, base_thickness], 
     [0, base_thickness], 
     [0,0]
 ];
+
+shTopSupport = [
+    [wt * 2,0], 
+    [wt * 3,0], 
+    [wt * 4,wt], 
+    [wt * 4,th], 
+    [(wt * 3)+2, th], 
+    [(wt * 3)+2, th-top_lip_z], 
+    [(wt * 3), th-top_lip_z], 
+    [wt * 3, wt * 2], 
+    [wt, base_thickness], 
+    [0, base_thickness], 
+    [0,0]
+];
+//shBaseSupport = [[wt * 2,0], [wt * 3,0], [wt * 4,wt], [wt * 4,bh], [(wt * 3)+2, bh], [(wt * 3)+2, bh-8], [(wt * 3), bh-8], [wt * 3, wt * 2], [wt, base_thickness], [0, base_thickness], [0,0]];
 
 //these are actually the latch external parts.
 shBaseLatches = [
@@ -111,6 +134,22 @@ shBaseLatches = [
     [0,0]
 ];
 
+shTopLatches = [
+    [wt * 2,0], 
+    [wt * 3,0], 
+    [wt * 4,wt], 
+    [(wt * 4)+5, th-15], 
+    [(wt * 4)+5, th], 
+    [wt * 4,th], 
+    [(wt * 3)+2, th],
+    [(wt * 3)+2, th-8], 
+    [(wt * 3), th-8], 
+    [wt * 3, wt * 2], 
+    [wt, base_thickness], 
+    [0, base_thickness], 
+    [0,0]
+];
+
 //shBaseHinge is the main part of the hinge, minus the actual hingey round bits :|
 shBaseHinge = [
     [(wt * 4), bh], 
@@ -120,6 +159,13 @@ shBaseHinge = [
     [(wt * 4), bh]
 ];
 
+shTopHinge = [
+    [(wt * 4), th], 
+    [((wt * 4)+10), th], 
+    [((wt * 4)+10), (th-2)], 
+    [(wt * 3), (wt * 2)], 
+    [(wt * 4), th]
+];
 //tried setting a variable 'shcorner' to either shTopCorner or shBaseCorner depending on 'run'. kept doing the corners but not the sides no matter what I tried. so module base_sides() got doubled up on the ifs instead
 
 ///////////////////come back to here
@@ -163,13 +209,14 @@ module reinforce_pair_at(xpos, which = 0) {
     translate([xpos - half_t, corner_distance.y, 0])
         rotate([90,0,90])
             linear_extrude(height = side_support_rib_thickness)
-                polygon(shBaseSupport);
+                //polygon(shBaseSupport);
+                polygon(which ? shTopSupport : shBaseSupport);
 
     // Front side extrudes in -X, so start half thickness after the target center.
     translate([xpos + half_t, 0, 0])
         rotate([90,0,270])
             linear_extrude(height = side_support_rib_thickness)
-                polygon(shBaseSupport);
+                polygon(which ? shTopSupport : shBaseSupport);
 }
 
 
@@ -243,20 +290,29 @@ module base_sides(which = 0) {
     }
 }
 
-module base_hinge_profile() {
+module base_hinge_profile(which = 0) {
     //creates rear support, then adds the hinge part minus the centre hole, finally differences out the hole. IFs probably unnecessary here as in base_hinge
-    module bmain() {
+    module bmain(which = 0) {
         //if ((run == 0) || (run == 2) || (run == 3) || (run == 5)) {
+        if (which == 0) {
             polygon(shBaseSupport);
             polygon(shBaseHinge);      
-            translate([(wt * 4)+5, bh, 0])
+            translate([(wt * 4)+5, bh, 0]) {
                 circle(d=10, $fn=100);
+            }
+        } else {
+            polygon(shTopSupport);
+            polygon(shTopHinge);      
+            translate([(wt * 4)+5, th, 0]) {
+                circle(d=10, $fn=100);
+            }
+        }
         //}
     }
     //if ((run == 0) || (run == 2) || (run == 3) || (run == 5)) {
         difference() {
-        bmain();
-        translate([(wt * 4)+5, bh, 0])
+        bmain(which);
+        translate([(wt * 4)+5, which ? th : bh, 0])
             circle(d=hinge_hole, $fn=100);
         }
     //}
@@ -269,30 +325,30 @@ module base_hinge(which = 0) {
         translate([corner_distance.x,corner_distance.y,0])
             rotate([90,0,0])
                 linear_extrude(height = 5)
-                    base_hinge_profile();
+                    base_hinge_profile(which);
         translate([corner_distance.x,corner_distance.y-25,0])
             rotate([90,0,0])
                 linear_extrude(height = 5)
-                    base_hinge_profile();
+                    base_hinge_profile(which);
         translate([corner_distance.x, 5,0])
             rotate([90,0,0])
                 linear_extrude(height = 5)
-                    base_hinge_profile();
+                    base_hinge_profile(which);
         translate([corner_distance.x, 30, 0])
             rotate([90,0,0])
                 linear_extrude(height = 5)
-                    base_hinge_profile();
+                    base_hinge_profile(which);
     } else if (which == 1) {
 //////// hinges top
         translate([corner_distance.x,corner_distance.y-5.1,0])
             rotate([90,0,0])
                 linear_extrude(height = 19.8)
-                    base_hinge_profile();
+                    base_hinge_profile(which);
 
         translate([corner_distance.x, 24.9,0])
             rotate([90,0,0])
                 linear_extrude(height = 19.8)
-                    base_hinge_profile();
+                    base_hinge_profile(which);
     }
 ////////
 
@@ -327,38 +383,48 @@ module base_plate() {
         cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
 }
 
-module base_latches_profile() {
+module base_latches_profile(which = 0) {
 
     //module blatch() {
     //    polygon(shBaseLatches);
     //}
     //if ((run == 0) || (run == 4) || (run == 5)) {
-        difference() {
-            polygon(shBaseLatches);
+            if (which == 0) {
+                difference() {
+                    polygon(shBaseLatches);
+                    translate([(wt * 4)+2, bh-10, 0]) {
+                        circle(d=latch_hole, $fn=100);
+                    }
+                }
+            } else {
+                difference() {
+                    polygon(shTopLatches);
+                    translate([(wt * 4)+2, th-10, 0]) {
+                        circle(d=latch_hole, $fn=100);
+                    }
+            }
+            }
             //blatch();
-            translate([(wt * 4)+2, bh-10, 0])
-                circle(d=latch_hole, $fn=100);
-        }
     //}
 }
 
-module base_latches() {
+module base_latches(which = 0) {
         translate([0, 5, 0])
             rotate([90,0,180])
                 linear_extrude(height = 5)
-                    base_latches_profile();
+                    base_latches_profile(which);
         translate([0, corner_distance.y-10, 0])
             rotate([90,0,180])
                 linear_extrude(height = 5)
-                    base_latches_profile();
+                    base_latches_profile(which);
         translate([0, corner_distance.y-35, 0])
             rotate([90,0,180])
                 linear_extrude(height = 5)
-                    base_latches_profile();
+                    base_latches_profile(which);
         translate([0, 30, 0])
             rotate([90,0,180])
                 linear_extrude(height = 5)
-                    base_latches_profile();
+                    base_latches_profile(which);
 }
 
 /*
@@ -373,7 +439,7 @@ render() {
                     base_sides(which = 0);
                     base_plate();
                     base_hinge(which = 0);
-                    base_latches();
+                    base_latches(which = 0);
                 }
             }
             if (run == "top") {
@@ -382,7 +448,7 @@ render() {
                     base_sides(which = 1);
                     base_plate();
                     base_hinge(which = 1);
-                    base_latches();
+                    base_latches(which = 1);
                 }
             }
 /*
@@ -408,17 +474,17 @@ render() {
                     base_sides(which = 0);
                     base_plate();
                     base_hinge(which = 0);
-                    base_latches();
+                    base_latches(which = 0);
                 }
 
-                translate([0, corner_distance.y, base_height*2]) {
+                translate([0, corner_distance.y, (top_height + base_height) + 10]) {
                     rotate([180, 0, 0]) {
                         union() {
                             base_corners(which = 1);
                             base_sides(which = 1);
                             base_plate();
                             base_hinge(which = 1);
-                            base_latches();
+                            base_latches(which = 1);
                         }
                     }
                 }
