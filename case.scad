@@ -20,7 +20,7 @@ Literally no one else approached their versions like I have. Probably because th
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/19r109";
+version = "v0.1-2026/06/19r170";
 **/
 
 //0 for base, 1 for corner poly, 2 for hinge poly, 3 for both (debug), 4 for latches, 5 for top, 7 for assembly
@@ -38,19 +38,28 @@ top_height = 20;
 hinge_hole = 2.6;
 //latch hole size
 latch_hole = 2.6; //max 3.5
+
+//changing this affects the angle of the seal outer. use for printing support ease.
+base_lip_z = 10; 
+//same for top
+top_lip_z = 10;
+
 //seal depth. This will always be -1 for the top (to allow 1mm seal)
 seal_depth = 2.2;
+//the width of the part at the case side
+seal_width_case = 3;
+//the width of the part that sticks out
+seal_width_open = 2;
 
 sd = seal_depth;
 bh = base_height;
 th = top_height;
 wt = wall_thickness;
+swc = seal_width_case;
+swo = seal_width_open;
 
-//changing this affects the angle of the seal outer. use for printing support ease.
-base_lip_z = 10; 
-//same for top
-top_lip_z = 6;
 
+//the corners are rotate extruded, so are also the sides
 shBaseCorner = [
     [0,0], 
     [wt * 2,0], 
@@ -73,12 +82,12 @@ shTopCorner = [
     [0,0], 
     [wt * 2,0], 
     [wt * 3,wt], 
-    [wt * 3,th-10], 
-    [(wt * 3)+2, th-top_lip_z], 
+    [wt * 3,th-top_lip_z], 
+    [(wt * 3)+2, th-8], 
     [(wt * 3)+2, th], 
-    [(wt * 3)+0.9, th], 
-    [(wt * 3)+0.3, (th+(sd-1))], 
-    [(wt * 2)+1.5, (th+(sd-1))], 
+    [(wt * 3)+1, th], 
+    [(wt * 3)+1, (th-sd)], 
+    [(wt * 2)+1, (th-sd)], 
     [(wt * 2)+1, th], 
     [wt * 2, th], 
     [wt * 2, wt * 2], 
@@ -87,6 +96,25 @@ shTopCorner = [
     [0,0]
 ];
 
+/*
+shTopCorner = [
+    [0,0], 
+    [wt * 2,0], 
+    [wt * 3,wt], 
+    [wt * 3,th-10], 
+    [(wt * 3)+2, th-top_lip_z], 
+    [(wt * 3)+2, th], 
+    [(wt * 3)+ swc / 2, th], //[(wt * 3)+0.9, th], 
+    [(wt * 3)- swo, (th+(sd-1))], //[(wt * 3)+0.3, (th+(sd-1))], 
+    [(wt * 2)+swo, (th+(sd-1))], //[(wt * 2)+1.7, (th+(sd-1))], 
+    [(wt * 2)+swo-wt / 2, th], //[(wt * 2)+1.1, th], 
+    [wt * 2, th], 
+    [wt * 2, wt * 2], 
+    [wt, base_thickness], 
+    [0, base_thickness], 
+    [0,0]
+];
+*/
 
 shBaseSupport = [
     [wt * 2,0], 
@@ -94,7 +122,7 @@ shBaseSupport = [
     [wt * 4,wt], 
     [wt * 4,bh], 
     [(wt * 3)+2, bh], 
-    [(wt * 3)+2, bh-base_lip_z], 
+    [(wt * 3), bh-base_lip_z], 
     [(wt * 3), bh-base_lip_z], 
     [wt * 3, wt * 2], 
     [wt, base_thickness], 
@@ -142,7 +170,7 @@ shTopLatches = [
     [(wt * 4)+5, th], 
     [wt * 4,th], 
     [(wt * 3)+2, th],
-    [(wt * 3)+2, th-8], 
+    [(wt * 3), th-8], 
     [(wt * 3), th-8], 
     [wt * 3, wt * 2], 
     [wt, base_thickness], 
@@ -190,6 +218,10 @@ chopz = -1;
 chop_width = 200;
 chop_height = 200;
 chop_depth = 200;
+
+module generate_seal() {
+    
+}
 
 function reinforce_spacing_auto() =
     (side_reinforce_count > 1)
@@ -477,7 +509,7 @@ render() {
                     base_latches(which = 0);
                 }
 
-                translate([0, corner_distance.y, (top_height + base_height) + 10]) {
+                translate([0, corner_distance.y, (top_height + base_height) + 1.5]) {
                     rotate([180, 0, 0]) {
                         union() {
                             base_corners(which = 1);
