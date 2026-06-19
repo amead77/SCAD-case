@@ -52,6 +52,8 @@ shBaseHinge = [[(wt * 4), bh], [((wt * 4)+10), bh], [((wt * 4)+10), (bh-2)], [(w
 cLatchBetweenHoles = 20.0;
 cLatchWidth = 19.5;
 
+side_support_rib_thickness = 5;
+
 // --------------------------
 // Side reinforcement customizer
 // --------------------------
@@ -79,14 +81,19 @@ function reinforce_x(i) =
         : (side_reinforce_first_offset + i * ((side_reinforce_spacing > 0) ? side_reinforce_spacing : reinforce_spacing_auto()));
 
 
-module reinforce_pair_at(xpos) {
-    translate([xpos, corner_distance.y, 0])
+module reinforce_pair_at(xpos, which = 0) {
+    half_t = side_support_rib_thickness / 2;
+
+    // Rear side extrudes in +X, so start half thickness before the target center.
+    translate([xpos - half_t, corner_distance.y, 0])
         rotate([90,0,90])
-            linear_extrude(height = 5)
+            linear_extrude(height = side_support_rib_thickness)
                 polygon(shBaseSupport);
-    translate([xpos, 0, 0])
+
+    // Front side extrudes in -X, so start half thickness after the target center.
+    translate([xpos + half_t, 0, 0])
         rotate([90,0,270])
-            linear_extrude(height = 5)
+            linear_extrude(height = side_support_rib_thickness)
                 polygon(shBaseSupport);
 }
 
@@ -236,7 +243,7 @@ module base_hinge(which = 0) {
 */    
     // side supports, configurable count and spacing
     for (i = [0:side_reinforce_count-1]) {
-        reinforce_pair_at(reinforce_x(i));
+        reinforce_pair_at(reinforce_x(i), which = which);
     }    
 }
 
