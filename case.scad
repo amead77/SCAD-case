@@ -12,8 +12,8 @@ with this.
 
 */
 
-//0 for base, 1 for corner poly, 2 for hinge poly, 3 for both (debug), 4 for latches, 5 for top
-run = 0; 
+//0 for base, 1 for corner poly, 2 for hinge poly, 3 for both (debug), 4 for latches, 5 for top, 7 for assembly
+run = 7; 
 //x,y size
 corner_distance = [100, 150]; 
 //muliples of nozzle size
@@ -61,37 +61,37 @@ chop_height = 200;
 chop_depth = 200;
 
 
-module bcorners() {
-    if ((run == 0) || (run == 2) || (run == 3)) {
+module bcorners(which = 0) {
+    if (which == 0) {
         rotate_extrude(angle = 90) {
             polygon(shBaseCorner);
         }
-    } else if ((run == 5) ||(run == 6)) {
+    } else {
         rotate_extrude(angle = 90) {
             polygon(shTopCorner);        
         }
     }
 }
 
-module base_corners() {
+module base_corners(which = 0 ) {
     translate([0, 0, 0])
         rotate([0,0,180])
-            bcorners();
+            bcorners(which);
     translate([corner_distance.x, 0, 0])
         rotate([0,0,270])
-            bcorners();
+            bcorners(which);
     translate([corner_distance.x, corner_distance.y, 0])
         rotate([0,0,0])
-            bcorners();
+            bcorners(which);
     translate([0, corner_distance.y, 0])
         rotate([0,0,90])
-            bcorners();
+            bcorners(which);
 }
 
 
-module base_sides() {
+module base_sides(which = 0) {
 
-    if (run == 0) {
+    if (which == 0) {
         translate([corner_distance.x,corner_distance.y,0])
             rotate([90,0,0])
                 linear_extrude(height = corner_distance.y)
@@ -109,7 +109,7 @@ module base_sides() {
                 linear_extrude(height = corner_distance.x)
                     polygon(shBaseCorner);    
     }
-    if (run == 5) {
+    if (which == 1) {
         translate([corner_distance.x,corner_distance.y,0])
             rotate([90,0,0])
                 linear_extrude(height = corner_distance.y)
@@ -132,26 +132,26 @@ module base_sides() {
 module base_hinge_profile() {
     //creates rear support, then adds the hinge part minus the centre hole, finally differences out the hole. IFs probably unnecessary here as in base_hinge
     module bmain() {
-        if ((run == 0) || (run == 2) || (run == 3) || (run == 5)) {
+        //if ((run == 0) || (run == 2) || (run == 3) || (run == 5)) {
             polygon(shBaseSupport);
             polygon(shBaseHinge);      
             translate([(wt * 4)+5, bh, 0])
                 circle(d=10, $fn=100);
-        }
+        //}
     }
-    if ((run == 0) || (run == 2) || (run == 3) || (run == 5)) {
+    //if ((run == 0) || (run == 2) || (run == 3) || (run == 5)) {
         difference() {
         bmain();
         translate([(wt * 4)+5, bh, 0])
             circle(d=hinge_hole, $fn=100);
         }
-    }
+    //}
 }
 
 //builds the hinges, then case side supports
-module base_hinge() {
+module base_hinge(which = 0) {
     //hinges base
-    if (run == 0) {
+    if (which == 0) {
         translate([corner_distance.x,corner_distance.y,0])
             rotate([90,0,0])
                 linear_extrude(height = 5)
@@ -168,7 +168,7 @@ module base_hinge() {
             rotate([90,0,0])
                 linear_extrude(height = 5)
                     base_hinge_profile();
-    } else if (run == 5) {
+    } else if (which == 1) {
 //////// hinges top
         translate([corner_distance.x,corner_distance.y-5.1,0])
             rotate([90,0,0])
@@ -210,16 +210,17 @@ module base_plate() {
 
 module base_latches_profile() {
 
-    module blatch() {
-        polygon(shBaseLatches);
-    }
-    if ((run == 0) || (run == 4) || (run == 5)) {
+    //module blatch() {
+    //    polygon(shBaseLatches);
+    //}
+    //if ((run == 0) || (run == 4) || (run == 5)) {
         difference() {
-            blatch();
+            polygon(shBaseLatches);
+            //blatch();
             translate([(wt * 4)+2, bh-10, 0])
                 circle(d=latch_hole, $fn=100);
         }
-    }
+    //}
 }
 
 module base_latches() {
@@ -249,10 +250,10 @@ render() {
         union() {
             if ((run == 0) || (run == 5)) {
                 union() {
-                    base_corners();
-                    base_sides();
+                    base_corners(which = 0);
+                    base_sides(which = 0);
                     base_plate();
-                    base_hinge();
+                    base_hinge(which = 0);
                     base_latches();
                 }
             }
@@ -269,7 +270,31 @@ render() {
                 base_latches();
             }
             if (run == 6) {
-                base_corners();
+                base_corners(which = 1);
+            }
+            if (run == 7) {
+                union() {
+                    base_corners(which = 0);
+                    base_sides(which = 0);
+                    base_plate();
+                    base_hinge(which = 0);
+                    base_latches();
+                }
+
+                translate([0, corner_distance.y, base_height*2]) {
+                    rotate([180, 0, 0]) {
+                        union() {
+                            base_corners(which = 1);
+                            base_sides(which = 1);
+                            base_plate();
+                            base_hinge(which = 1);
+                            base_latches();
+                        }
+                    }
+                }
+
+
+
             }
         }
 
