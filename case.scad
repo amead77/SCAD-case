@@ -14,37 +14,50 @@ tall base caused the latches to get clipped in half. Then I found another, but t
 and other limitations. I found myself with no real option but to take another look at this.
 And... oh... I made some design *choices* didn't I.
 Literally no one else approached their versions like I have. Probably because they have sense.
-
+I tried getting copilot to create my latches and fix some issues. That branch got abandoned immediately
+as AI can't see what it is making. It can help you with syntax errors, some functions and stuff, but not
+create a model or part of.
 */
 
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/19r274";
+version = "v0.1-2026/06/19r421";
 **/
 
-//0 for base, 1 for corner poly, 2 for hinge poly, 3 for both (debug), 4 for latches, 5 for top, 7 for assembly
+use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
+
+//Choose part / Assembly view
 run = "assembly"; //[assembly, base, top, latches, handle, seal]
 //x,y size
 corner_distance = [100, 150]; 
 //muliples of nozzle size
-wall_thickness = 3.2; 
+wall_thickness = 3.2;  //0.1
 //max 2x wall_thickness
-base_thickness = 4; 
+base_thickness = 4;  //0.1
 //height of base bottom (min 20mm or it weirds out)
-base_height = 30;
-top_height = 100;
+base_height = 30; //0.1
+top_height = 100; //0.1
 //hinge hole size
-hinge_hole = 2.6;
-//latch hole size
-latch_hole = 2.6; //max 3.5
+hinge_hole = 3.2; //0.1
+//thickness for outer hinge and 2x is inner hinge
+hinge_thickness = 4.0; //0.1
+hinge_clearance = 0.2; //0.1
+hinge_screw_len = 35; //0.1
+hinge_screw_dia = 3; //0.1
+hinge_screw_head_dia = 6; //0.1
+hinge_screw_head_len = 4; //0.1
+//fudged for visualisation only
+left_screw_offset = 115;
+right_screw_offset = 35;
+
 
 //changing this affects the angle of the seal outer. use for printing support ease. Min is lip_z = 8
-base_lip_z = 8; 
-base_lip_z_angler = 3;
+base_lip_z = 8; //0.1
+base_lip_z_angler = 3; //0.1
 //same for top
-top_lip_z = 8;
-top_lip_z_angler = 2;
+top_lip_z = 8; //0.1
+top_lip_z_angler = 2; //0.1
 
 //seal depth. This will always be -1 for the top (to allow 1mm seal)
 seal_depth = 1.5;
@@ -201,30 +214,47 @@ shTopHinge = [
     [(wt * 3), (wt * 2)], 
     [(wt * 4), th]
 ];
-//tried setting a variable 'shcorner' to either shTopCorner or shBaseCorner depending on 'run'. kept doing the corners but not the sides no matter what I tried. so module base_sides() got doubled up on the ifs instead
+
 
 ///////////////////come back to here
 //lets do a massive cludge :)
-cLatchBetweenHoles = 20.0;
-cLatchWidth = 19.5;
+cLatchBetweenHoles = 20.0;  //0.1
+cLatchWidth = 19.5; //0.1
+cLatchCircle = 10.0; //0.1
+//too thick and it won't flex
+cLatchThickness = 3; //0.1
+latch_screw_len = 25; //0.1
+latch_screw_dia = 3; //0.1
+latch_screw_head_dia = 6; //0.1
+latch_screw_head_len = 4; //0.1
+//fudged for visualisation only
+latch_left_screw_offset = 110;
+latch_right_screw_offset = 40;
+//latch hole size (max 3.5)
+latch_hole = 3.2;  //0.1
 
-side_support_rib_thickness = 5;
+
+
+side_support_rib_thickness = 5; //0.1
 
 // --------------------------
 // Side reinforcement customizer
 // --------------------------
+//reinforcement count
 side_reinforce_count = 3; // [1:1:8]
+//offset from edge
 side_reinforce_first_offset = 10; // [4:1:60]
-side_reinforce_spacing = 0; // 0 = auto spread between edge offsets
+// 0 = auto spread between edge offsets
+side_reinforce_spacing = 0; 
 
-
+//visualisation of innards
 chopmodel = true; //[true, false];
-chopx = 50;
-chopy = 75;
+chopx = -50;
+chopy = -180;
 chopz = -1;
-chop_width = 200;
+chop_width = 50;
 chop_height = 200;
-chop_depth = 200;
+chop_depth = 100;
 
 /*
 Create a seal that fits in the top rim of the case base section. The top of the seal is chamfered to allow 
@@ -424,36 +454,149 @@ module base_hinge_profile(which = 0) {
 }
 
 //builds the hinges, then case side supports
-module base_hinge(which = 0) {
+module base_hinge(which = 0, addscrews = false) {
     //hinges base
     if (which == 0) {
         translate([corner_distance.x,corner_distance.y,0])
             rotate([90,0,0])
-                linear_extrude(height = 5)
+                linear_extrude(height = hinge_thickness)
                     base_hinge_profile(which);
-        translate([corner_distance.x,corner_distance.y-25,0])
+        translate([corner_distance.x,corner_distance.y-hinge_thickness * 5,0])
             rotate([90,0,0])
-                linear_extrude(height = 5)
+                linear_extrude(height = hinge_thickness)
                     base_hinge_profile(which);
-        translate([corner_distance.x, 5,0])
+        translate([corner_distance.x, hinge_thickness,0])
             rotate([90,0,0])
-                linear_extrude(height = 5)
+                linear_extrude(height = hinge_thickness)
                     base_hinge_profile(which);
-        translate([corner_distance.x, 30, 0])
+        translate([corner_distance.x, hinge_thickness * 6, 0])
             rotate([90,0,0])
-                linear_extrude(height = 5)
+                linear_extrude(height = hinge_thickness)
                     base_hinge_profile(which);
     } else if (which == 1) {
 //////// hinges top
-        translate([corner_distance.x,corner_distance.y-5.1,0])
+        translate([corner_distance.x,corner_distance.y - hinge_thickness - hinge_clearance, 0])
             rotate([90,0,0])
-                linear_extrude(height = 19.8)
+                linear_extrude(height = hinge_thickness * 4 - (hinge_clearance * 2))
                     base_hinge_profile(which);
 
-        translate([corner_distance.x, 24.9,0])
+        translate([corner_distance.x, hinge_thickness * 5 - hinge_clearance, 0])
             rotate([90,0,0])
-                linear_extrude(height = 19.8)
+                linear_extrude(height = hinge_thickness * 4 - (hinge_clearance * 2))
                     base_hinge_profile(which);
+    }
+/*
+    simple screw module for differencing/subtracting from models
+    this isn't intended to create a thread, just a suitable 
+    screw hole in whatever is being designed.
+
+module screw(
+    thread_dia = 3,  //the diameter of the screw thread
+    thread_len = 30, //the length of the screw thread
+    head_dia = 6,    //the diameter of the screw head
+    head_len = 2,    //the length of the screw head
+    head_cs = false  //whether the screw head is countersunk
+
+*/
+    if (addscrews) {
+        translate([
+            corner_distance.x + 17.5, 
+            left_screw_offset, //hinge_screw_head_len + hinge_screw_len + (hinge_thickness * 4), 
+            top_height
+        ]) {
+            rotate([90,0,0]) {
+                screw(
+                    thread_dia = hinge_screw_dia,
+                    thread_len = hinge_screw_len,
+                    head_dia = hinge_screw_head_dia,
+                    head_len = hinge_screw_head_len,
+                    head_cs = false,
+                    translate_head = true
+                );
+            }
+        }
+        translate([
+            corner_distance.x + 17.5, 
+            right_screw_offset, //corner_distance.y,//-(hinge_thickness * 3) - 10 - hinge_screw_head_len-hinge_screw_len, 
+            top_height
+        ]) {
+            rotate([90,0,180]) {
+                screw(
+                    thread_dia = hinge_screw_dia,
+                    thread_len = hinge_screw_len,
+                    head_dia = hinge_screw_head_dia,
+                    head_len = hinge_screw_head_len,
+                    head_cs = false,
+                    translate_head = true
+                );
+            }
+        }
+        //latch screws
+        translate([
+            -15, 
+            latch_left_screw_offset, //hinge_screw_head_len + hinge_screw_len + (hinge_thickness * 4), 
+            top_height - 10
+        ]) {
+            rotate([90,0,0]) {
+                screw(
+                    thread_dia = hinge_screw_dia,
+                    thread_len = hinge_screw_len,
+                    head_dia = hinge_screw_head_dia,
+                    head_len = hinge_screw_head_len,
+                    head_cs = false,
+                    translate_head = true
+                );
+            }
+        }
+        translate([
+            -15, 
+            latch_right_screw_offset, //corner_distance.y,//-(hinge_thickness * 3) - 10 - hinge_screw_head_len-hinge_screw_len, 
+            top_height - 10
+        ]) {
+            rotate([90,0,180]) {
+                screw(
+                    thread_dia = hinge_screw_dia,
+                    thread_len = hinge_screw_len,
+                    head_dia = hinge_screw_head_dia,
+                    head_len = hinge_screw_head_len,
+                    head_cs = false,
+                    translate_head = true
+                );
+            }
+        }
+        translate([
+            -15, 
+            latch_left_screw_offset, //hinge_screw_head_len + hinge_screw_len + (hinge_thickness * 4), 
+            top_height + 10
+        ]) {
+            rotate([90,0,0]) {
+                screw(
+                    thread_dia = hinge_screw_dia,
+                    thread_len = hinge_screw_len,
+                    head_dia = hinge_screw_head_dia,
+                    head_len = hinge_screw_head_len,
+                    head_cs = false,
+                    translate_head = true
+                );
+            }
+        }
+        translate([
+            -15, 
+            latch_right_screw_offset, //corner_distance.y,//-(hinge_thickness * 3) - 10 - hinge_screw_head_len-hinge_screw_len, 
+            top_height + 10
+        ]) {
+            rotate([90,0,180]) {
+                screw(
+                    thread_dia = hinge_screw_dia,
+                    thread_len = hinge_screw_len,
+                    head_dia = hinge_screw_head_dia,
+                    head_len = hinge_screw_head_len,
+                    head_cs = false,
+                    translate_head = true
+                );
+            }
+        }
+
     }
 ////////
 
@@ -477,11 +620,16 @@ module base_hinge(which = 0) {
                 linear_extrude(height = 5)
                     polygon(shBaseSupport);
 */    
+
+}
+
+module side_supports(which) {
     // side supports, configurable count and spacing
     for (i = [0:side_reinforce_count-1]) {
         reinforce_pair_at(reinforce_x(i), which = which);
-    }    
+    }        
 }
+
 
 module base_plate() {
     translate([0,0,0])
@@ -532,6 +680,10 @@ module base_latches(which = 0) {
                     base_latches_profile(which);
 }
 
+module finger_latch() {
+    
+}
+
 /*
 Main
 */
@@ -580,6 +732,7 @@ render() {
                     base_plate();
                     base_hinge(which = 0);
                     base_latches(which = 0);
+                    side_supports(which = 0);
                 }
 
                 translate([0, corner_distance.y, (top_height + base_height) + 0]) {
@@ -588,8 +741,9 @@ render() {
                             base_corners(which = 1);
                             base_sides(which = 1);
                             base_plate();
-                            base_hinge(which = 1);
+                            base_hinge(which = 1, addscrews = true);
                             base_latches(which = 1);
+                            side_supports(which = 1);
                         }
                     }
                 }
