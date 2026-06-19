@@ -20,7 +20,7 @@ Literally no one else approached their versions like I have. Probably because th
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/19r227";
+version = "v0.1-2026/06/19r254";
 **/
 
 //0 for base, 1 for corner poly, 2 for hinge poly, 3 for both (debug), 4 for latches, 5 for top, 7 for assembly
@@ -48,6 +48,8 @@ top_lip_z_angler = 2;
 
 //seal depth. This will always be -1 for the top (to allow 1mm seal)
 seal_depth = 2.2;
+//under or oversize the seal height by this much, for fitment/different materials
+seal_undersizing = -0.2;
 //the width of the part at the case side
 //seal_width_case = 3;
 //the width of the part that sticks out
@@ -226,7 +228,69 @@ Create a seal that fits in the top rim of the case base section. The top of the 
 the case top to revolve on it's hinge and drop onto it.
 */
 module generate_seal() {
+    // Groove in base is between x=(wt*2)+1 and x=(wt*3)+1, z=(bh-sd)..bh.
+    slot_inner = (wt * 2) + 1;
+    slot_outer = slot_inner + wt;
+    z_bottom = bh - sd;
+    z_top = bh;
 
+    seal_top_w = min(wt, max(0.2, swo));
+    top_inset = (wt - seal_top_w) / 2;
+
+    //profile of the seal. square base with chamfered top
+    shSeal = [
+        [slot_inner, z_bottom],
+        [slot_outer, z_bottom],
+        [slot_outer, z_top],
+        [slot_outer - top_inset, z_top+seal_depth+seal_undersizing],
+        [slot_inner + top_inset, z_top+seal_depth+seal_undersizing],
+        [slot_inner, z_top],
+        [slot_inner, z_bottom]
+    ];
+
+    module seal_corner() {
+        rotate_extrude(angle = 90)
+            polygon(shSeal);
+    }
+
+    module seal_corners() {
+        translate([0, 0, 0])
+            rotate([0,0,180])
+                seal_corner();
+        translate([corner_distance.x, 0, 0])
+            rotate([0,0,270])
+                seal_corner();
+        translate([corner_distance.x, corner_distance.y, 0])
+            rotate([0,0,0])
+                seal_corner();
+        translate([0, corner_distance.y, 0])
+            rotate([0,0,90])
+                seal_corner();
+    }
+
+    module seal_sides() {
+        translate([corner_distance.x, corner_distance.y, 0])
+            rotate([90,0,0])
+                linear_extrude(height = corner_distance.y)
+                    polygon(shSeal);
+        translate([0, corner_distance.y, 0])
+            rotate([90,0,90])
+                linear_extrude(height = corner_distance.x)
+                    polygon(shSeal);
+        translate([0, 0, 0])
+            rotate([90,0,180])
+                linear_extrude(height = corner_distance.y)
+                    polygon(shSeal);
+        translate([corner_distance.x, 0, 0])
+            rotate([90,0,270])
+                linear_extrude(height = corner_distance.x)
+                    polygon(shSeal);
+    }
+
+    union() {
+        seal_corners();
+        seal_sides();
+    }
 }
 
 function reinforce_spacing_auto() =
@@ -515,7 +579,7 @@ render() {
                     base_latches(which = 0);
                 }
 
-                translate([0, corner_distance.y, (top_height + base_height) + 1.5]) {
+                translate([0, corner_distance.y, (top_height + base_height) + 8]) {
                     rotate([180, 0, 0]) {
                         union() {
                             base_corners(which = 1);
@@ -525,6 +589,9 @@ render() {
                             base_latches(which = 1);
                         }
                     }
+                }
+                translate([0, 0, 0.5]) {
+                    generate_seal();
                 }
             } //assembly
 
@@ -539,7 +606,7 @@ render() {
             if (run == "seal") {
                 generate_seal();
             }
-        }
+        } //union, for separating for differencing
 
         if (chopmodel == true) {
             translate([chopx, chopy, chopz])
