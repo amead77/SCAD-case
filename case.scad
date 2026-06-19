@@ -22,21 +22,21 @@ create a model or part of.
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/19r503";
+version = "v0.1-2026/06/19r553";
 **/
 
 use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
-$fn = 16;
+$fn = 32;
 //Choose part / Assembly view
 run = "assembly"; //[assembly, base, top, latches, handle, seal]
 //x,y size
-corner_distance = [100, 150]; 
+corner_distance = [250, 250]; 
 //muliples of nozzle size
 wall_thickness = 3.2;  //0.1
 //max 2x wall_thickness
 base_thickness = 4;  //0.1
 //height of base bottom (min 20mm or it weirds out)
-base_height = 30; //0.1
+base_height = 100; //0.1
 top_height = 20; //0.1
 //hinge hole size
 hinge_hole = 3.2; //0.1
@@ -250,12 +250,12 @@ side_reinforce_spacing = 0;
 
 //visualisation of innards
 chopmodel = true; //[true, false];
-chopx = -50;
-chopy = -70;
+chopx = -0;
+chopy = -0;
 chopz = -1;
-chop_width = 50;
+chop_width = 150;
 chop_height = 200;
-chop_depth = 100;
+chop_depth = 200;
 
 /*
 Create a seal that fits in the top rim of the case base section. The top of the seal is chamfered to allow 
@@ -682,41 +682,32 @@ module base_latches(which = 0) {
 }
 
 module finger_latch() {
-    tube(
-        od_base = cLatchCircle,
-        od_top = cLatchCircle,
-        id_base = latch_screw_dia+latch_screw_clip_clearance,
-        id_top = latch_screw_dia+latch_screw_clip_clearance,
-        length = cLatchWidth - hinge_clearance,
-        segment_angle = 240,
-        rotation = 55
-    );
-    translate([0, cLatchBetweenHoles, 0]) {
-/*
-Cut out a radial slot from a cylindrical tube. The slot is defined by its width at the outer diameter, and the angle of the slot in degrees. The function creates the slot using linear extrusion of a polygon that represents the slot shape.
-    od_base,
-    od_top,
-    id_base,
-    id_top,
-    length,
-    center = true,
-    segment_angle = 0,   //0 keeps the full 360-degree tube
-    rotation = 0,         //start angle of the kept segment (degrees)*/
+    union() {
         tube(
-            od_base = cLatchCircle,
-            od_top = cLatchCircle,
+            od_base = cLatchCircle-0.5,
+            od_top = cLatchCircle-0.5,
             id_base = latch_screw_dia+latch_screw_clip_clearance,
             id_top = latch_screw_dia+latch_screw_clip_clearance,
             length = cLatchWidth - hinge_clearance,
-            segment_angle = 0,
-            rotation = 0
+            segment_angle = 240,
+            rotation = 55
         );
+        translate([0, cLatchBetweenHoles, 0]) {
+            tube(
+                od_base = cLatchCircle,
+                od_top = cLatchCircle,
+                id_base = latch_screw_dia+latch_screw_clip_clearance,
+                id_top = latch_screw_dia+latch_screw_clip_clearance,
+                length = cLatchWidth - hinge_clearance,
+                segment_angle = 0,
+                rotation = 0
+            );
+        }
+        translate([-latch_thickness, -9, -9.65]) {
+            rotate([0, 270, 0])
+                cube([cLatchWidth- hinge_clearance, 10+cLatchWidth- hinge_clearance, latch_thickness]);
+        }
     }
-    translate([-latch_thickness, -8, -10]) {
-        rotate([0, 270, 0])
-            cube([cLatchBetweenHoles- hinge_clearance, 10+cLatchWidth- hinge_clearance, latch_thickness]);
-    }
-
 }
 
 /*
@@ -790,10 +781,15 @@ render() {
                         finger_latch();
                     }
                 }
+                translate([-15, 20, base_height-10]) {
+                    rotate([90, 0, 0]) {
+                        finger_latch();
+                    }
+                }
             } //assembly
 
             if (run == "latches") {
-
+                finger_latch();
             }
 
             if (run == "handle") {
