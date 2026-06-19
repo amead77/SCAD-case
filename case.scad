@@ -52,6 +52,14 @@ shBaseHinge = [[(wt * 4), bh], [((wt * 4)+10), bh], [((wt * 4)+10), (bh-2)], [(w
 cLatchBetweenHoles = 20.0;
 cLatchWidth = 19.5;
 
+// --------------------------
+// Side reinforcement customizer
+// --------------------------
+side_reinforce_count = 3; // [1:1:8]
+side_reinforce_first_offset = 10; // [4:1:60]
+side_reinforce_spacing = 0; // 0 = auto spread between edge offsets
+
+
 chopmodel = true; //[true, false];
 chopx = 50;
 chopy = 75;
@@ -60,6 +68,30 @@ chop_width = 200;
 chop_height = 200;
 chop_depth = 200;
 
+function reinforce_spacing_auto() =
+    (side_reinforce_count > 1)
+        ? (corner_distance.x - (2 * side_reinforce_first_offset)) / (side_reinforce_count - 1)
+        : 0;
+
+function reinforce_x(i) =
+    (side_reinforce_count == 1)
+        ? (corner_distance.x / 2)
+        : (side_reinforce_first_offset + i * ((side_reinforce_spacing > 0) ? side_reinforce_spacing : reinforce_spacing_auto()));
+
+
+module reinforce_pair_at(xpos) {
+    translate([xpos, corner_distance.y, 0])
+        rotate([90,0,90])
+            linear_extrude(height = 5)
+                polygon(shBaseSupport);
+    translate([xpos, 0, 0])
+        rotate([90,0,270])
+            linear_extrude(height = 5)
+                polygon(shBaseSupport);
+}
+
+
+///////////////////////////////////////////
 
 module bcorners(which = 0) {
     if (which == 0) {
@@ -184,6 +216,7 @@ module base_hinge(which = 0) {
 
 
         //side supports
+/*
         translate([10, corner_distance.y, 0])
             rotate([90,0,90])
                 linear_extrude(height = 5)
@@ -200,7 +233,11 @@ module base_hinge(which = 0) {
             rotate([90,0,270])
                 linear_extrude(height = 5)
                     polygon(shBaseSupport);
-    
+*/    
+    // side supports, configurable count and spacing
+    for (i = [0:side_reinforce_count-1]) {
+        reinforce_pair_at(reinforce_x(i));
+    }    
 }
 
 module base_plate() {
