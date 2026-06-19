@@ -20,7 +20,7 @@ Literally no one else approached their versions like I have. Probably because th
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/19r170";
+version = "v0.1-2026/06/19r222";
 **/
 
 //0 for base, 1 for corner poly, 2 for hinge poly, 3 for both (debug), 4 for latches, 5 for top, 7 for assembly
@@ -33,16 +33,18 @@ wall_thickness = 3.2;
 base_thickness = 4; 
 //height of base bottom (min 20mm or it weirds out)
 base_height = 30;
-top_height = 20;
+top_height = 100;
 //hinge hole size
 hinge_hole = 2.6;
 //latch hole size
 latch_hole = 2.6; //max 3.5
 
-//changing this affects the angle of the seal outer. use for printing support ease.
-base_lip_z = 10; 
+//changing this affects the angle of the seal outer. use for printing support ease. Min is lip_z = 8
+base_lip_z = 8; 
+base_lip_z_angler = 3;
 //same for top
-top_lip_z = 10;
+top_lip_z = 8;
+top_lip_z_angler = 2;
 
 //seal depth. This will always be -1 for the top (to allow 1mm seal)
 seal_depth = 2.2;
@@ -64,8 +66,8 @@ shBaseCorner = [
     [0,0], 
     [wt * 2,0], 
     [wt * 3,wt], 
-    [wt * 3,bh-base_lip_z], 
-    [(wt * 3)+2, bh-8], 
+    [wt * 3,bh-base_lip_z-base_lip_z_angler], 
+    [(wt * 3)+2, bh-base_lip_z], 
     [(wt * 3)+2, bh], 
     [(wt * 3)+1, bh], 
     [(wt * 3)+1, (bh-sd)], 
@@ -83,7 +85,7 @@ shTopCorner = [
     [wt * 2,0], 
     [wt * 3,wt], 
     [wt * 3,th-top_lip_z], 
-    [(wt * 3)+2, th-8], 
+    [(wt * 3)+2, th-top_lip_z+top_lip_z_angler], 
     [(wt * 3)+2, th], 
     [(wt * 3)+1, th], 
     [(wt * 3)+1, (th-sd)], 
@@ -136,8 +138,8 @@ shTopSupport = [
     [wt * 4,wt], 
     [wt * 4,th], 
     [(wt * 3)+2, th], 
-    [(wt * 3)+2, th-top_lip_z], 
-    [(wt * 3), th-top_lip_z], 
+    [(wt * 3)+2, th-top_lip_z+top_lip_z_angler], 
+    [(wt * 3), th-top_lip_z+top_lip_z_angler], 
     [wt * 3, wt * 2], 
     [wt, base_thickness], 
     [0, base_thickness], 
@@ -220,7 +222,7 @@ chop_height = 200;
 chop_depth = 200;
 
 module generate_seal() {
-    
+
 }
 
 function reinforce_spacing_auto() =
