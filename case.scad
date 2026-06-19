@@ -52,6 +52,14 @@ shBaseHinge = [[(wt * 4), bh], [((wt * 4)+10), bh], [((wt * 4)+10), (bh-2)], [(w
 cLatchBetweenHoles = 20.0;
 cLatchWidth = 19.5;
 
+chopmodel = true; //[true, false];
+chopx = 50;
+chopy = 75;
+chopz = -1;
+chop_width = 200;
+chop_height = 200;
+chop_depth = 200;
+
 
 module bcorners() {
     if ((run == 0) || (run == 2) || (run == 3)) {
@@ -233,28 +241,42 @@ module base_latches() {
                     base_latches_profile();
 }
 
+/*
+Main
+*/
+render() {
+    difference() {
+        union() {
+            if ((run == 0) || (run == 5)) {
+                union() {
+                    base_corners();
+                    base_sides();
+                    base_plate();
+                    base_hinge();
+                    base_latches();
+                }
+            }
+            if ((run == 1) || (run == 3)) {
+                polygon(shBaseCorner);
+            }
+            if (run == 2) {
+                base_hinge_profile();
+            }
+            if (run == 3) {
+                #base_hinge_profile();
+            }
+            if (run == 4) {
+                base_latches();
+            }
+            if (run == 6) {
+                base_corners();
+            }
+        }
 
-if ((run == 0) || (run == 5)) {
-    union() {
-        base_corners();
-        base_sides();
-        base_plate();
-        base_hinge();
-        base_latches();
+        if (chopmodel == true) {
+            translate([chopx, chopy, chopz])
+                cube([chop_width, chop_height, chop_depth], center = false);
+        }
+
     }
-}
-if ((run == 1) || (run == 3)) {
-    polygon(shBaseCorner);
-}
-if (run == 2) {
-    base_hinge_profile();
-}
-if (run == 3) {
-    #base_hinge_profile();
-}
-if (run == 4) {
-    base_latches();
-}
-if (run == 6) {
-    base_corners();
 }
