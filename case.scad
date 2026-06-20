@@ -22,7 +22,7 @@ It can help you with syntax errors, some functions and stuff, but not create a m
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/20r177";
+version = "v0.1-2026/06/20r180";
 **/
 
 use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -48,8 +48,8 @@ hinge_screw_dia = 1.75; //0.1
 hinge_screw_head_dia = 6; //0.1
 hinge_screw_head_len = 4; //0.1
 //fudged for visualisation only
-left_screw_offset = 115;
 right_screw_offset = 35;
+left_screw_offset = corner_distance.y - right_screw_offset;
 
 
 //changing this affects the angle of the seal outer. use for printing support ease. Min is lip_z = 8
