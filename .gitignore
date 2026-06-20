@@ -1,7 +1,2 @@
-*
-models/**
-!.scad
-!.gitignore
-models/test base.3mf
-models/test latch.3mf
-models/test top.3mf
+*.json
+*.3mf
