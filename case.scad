@@ -24,10 +24,10 @@ as of 2026-06-20 the case is complete as is, but needs some hard-coded bits chan
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/20r319";
+version = "v0.1-2026/06/20r324";
 **/
 
-use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
+//use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
 $fn = 32;
 
 //Choose part / Assembly view
@@ -321,6 +321,114 @@ shTopHinge = [
 ];
 
 
+/*
+Tube and cylinder generator module. 
+The tube can be parameterized with different top and bottom diameters,
+as well as a segment angle to create a partial tube. 
+The segment angle is defined such that 0 or 360 creates a full tube, 
+and values in between create a tube with the specified angle missing.
+The rotation parameter allows you to specify the starting angle of 
+the kept segment, where 0 degrees is aligned with the positive 
+x-axis and angles increase counter-clockwise.
+
+module tube(
+    od_base,
+    od_top,
+    id_base,
+    id_top,
+    length,
+    center = true,
+    segment_angle = 0,   //0 keeps the full 360-degree tube
+    rotation = 0         //start angle of the kept segment (degrees)
+*/
+module tube(
+    od_base,
+    od_top,
+    id_base,
+    id_top,
+    length,
+    center = true,
+    segment_angle = 0,   //0 keeps the full 360-degree tube
+    rotation = 0,         //start angle of the kept segment (degrees)
+    $fn=$fn
+) {
+    max_od = max(od_base, od_top);
+    clip_size = max_od * 2;
+    z0 = center ? -length / 2 : 0;
+
+    // Full tube profile.
+    module full_tube() {
+        difference() {
+            cylinder(d1 = od_base, d2 = od_top, h = length, center = center);
+            cylinder(d1 = id_base, d2 = id_top, h = length, center = center);
+        }
+    }
+
+    if (segment_angle == 0 || segment_angle >= 360) {
+        full_tube();
+    } else {
+        assert(segment_angle > 0,
+            "segment_angle must be 0, or > 0");
+
+        steps = max(6, ceil(segment_angle / 5));
+        sector_points = concat(
+            [[0, 0]],
+            [for (i = [0 : steps])
+                [
+                    clip_size * cos(i * segment_angle / steps),
+                    clip_size * sin(i * segment_angle / steps)
+                ]
+            ]
+        );
+
+        // Build a pie-slice prism and intersect it with the tube.
+        intersection() {
+            full_tube();
+
+            translate([0, 0, z0])
+                rotate([0, 0, rotation]) {
+                    linear_extrude(height = length)
+                        polygon(sector_points);
+                }
+        }
+    }
+}
+
+module screw(
+    thread_dia = 3,  //the diameter of the screw thread
+    thread_len = 30, //the length of the screw thread
+    head_dia = 6,    //the diameter of the screw head
+    head_len = 2,    //the length of the screw head
+    head_cs = true, //whether the screw head is countersunk
+    centered = false,  //whether the screw is centered on the origin or starts at the origin. This only affects the Z axis, the screw is always centered on the X and Y axes.
+    translate_head = false, //translate the final position by its own length
+    $fn=$fn
+) {
+    union() {
+        if (translate_head) {
+            rotate([180, 0, 0]) {
+                if (centered) {
+                    translate([0, 0, -thread_len/2])
+                        cylinder(h = thread_len, d = thread_dia);
+                    translate([0, 0, thread_len/2])
+                        if (head_cs == false) {
+                            cylinder(h = head_len, d = head_dia);
+                        } else {
+                            cylinder(h = head_len, d1 = thread_dia, d2 = head_dia);
+                        }
+                } else {
+                        cylinder(h = thread_len, d = thread_dia);
+                        translate([0,0,thread_len])
+                            if (head_cs == false) {
+                                cylinder(h = head_len, d = head_dia);
+                            } else {
+                                cylinder(h = head_len, d1 = thread_dia, d2 = head_dia);
+                            }
+                }
+            }
+        }
+    }
+}
 
 /*
 Create a rounded square (or rect)
@@ -1050,7 +1158,6 @@ render() {
         if (chopmodel == true) {
             translate([chopx, chopy, chopz])
                 if (chopmodel_showblock) {
-                    //color("")
                     %cube([chop_width, chop_height, chop_depth], center = false);
                 } else {
                     cube([chop_width, chop_height, chop_depth], center = false);
