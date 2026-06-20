@@ -22,7 +22,7 @@ It can help you with syntax errors, some functions and stuff, but not create a m
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/20r239";
+version = "v0.1-2026/06/20r269";
 **/
 
 use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -49,10 +49,6 @@ base_thickness = 4;  //0.1
 //thickness for outer hinge and 2x is inner hinge
 hinge_thickness = 4.0; //0.1
 hinge_clearance = 0.2; //0.1
-hinge_screw_len = 35; //0.1
-hinge_screw_dia = 3.0; //0.1
-hinge_screw_head_dia = 7; //0.1
-hinge_screw_head_len = 4; //0.1
 //fudged for visualisation only
 right_screw_offset = 35;
 left_screw_offset = corner_distance.y - right_screw_offset;
@@ -78,6 +74,10 @@ latch_screw_dia = 3.0; //0.1
 latch_screw_len = 35; //0.1
 latch_screw_head_dia = 6; //0.1
 latch_screw_head_len = 4; //0.1
+hinge_screw_len = 35; //0.1
+hinge_screw_dia = 3.0; //0.1
+hinge_screw_head_dia = 7; //0.1
+hinge_screw_head_len = 4; //0.1
 
 
 
@@ -116,12 +116,12 @@ swo = seal_width_open;
 /* [Latches] */
 
 ///////////////////come back to here
-//lets do a massive cludge :)
+//this shouldn't change
 latch_dist_between_holes = 20.0;  //0.1
 latch_width = 19.5; //0.1
 latch_circle_thickness = 6.0; //0.1
 //too thick and it won't flex
-cLatchThickness = 2.2; //0.1
+latch_thickness = 2.2; //0.1
 //fudged for visualisation only
 latch_right_screw_offset = 40;
 latch_left_screw_offset = corner_distance.y - latch_right_screw_offset;
@@ -168,9 +168,9 @@ handle_rotation = 180; //[0:180]
 //visualisation of innards
 chopmodel = false; //[true, false];
 chopmodel_showblock = false; //[true, false];
-chopx = -0; //[0:400]
-chopy = -0; //[0:400]
-chopz = -1; //[0:400]
+chopx = -0; //[-400:400]
+chopy = -0; //[-400:400]
+chopz = -1; //[-400:400]
 chop_width = 150; //[0:400]
 chop_height = 200; //[0:400]
 chop_depth = 200; //[0:400]
@@ -530,11 +530,20 @@ function reinforce_x(i) =
         ? (corner_distance.x / 2)
         : (side_reinforce_first_offset + i * ((side_reinforce_spacing > 0) ? side_reinforce_spacing : reinforce_spacing_auto()));
 
-function hinge_rib_hole_dia(which) =
-    which == 0 ? hinge_outer_rib_hole_dia : hinge_inner_rib_hole_dia;
+function hinge_rib_hole_dia(which, inner) =
+    which == 0 ? 
+        inner ? hinge_inner_rib_hole_dia : hinge_outer_rib_hole_dia : 
+        hinge_outer_rib_hole_dia;
 
-function latch_rib_hole_dia(which) =
-    which == 0 ? latch_outer_rib_base_hole_dia : latch_outer_rib_top_hole_dia;
+function latch_rib_hole_dia(which, inner) =
+    which == 0 ? 
+        inner ? 
+            latch_inner_rib_base_hole_dia :
+            latch_outer_rib_base_hole_dia 
+        : 
+        inner ? 
+            latch_inner_rib_top_hole_dia :
+            latch_outer_rib_top_hole_dia;
 
 
 module reinforce_pair_at(xpos, which = 0) {
@@ -625,7 +634,7 @@ module base_sides(which = 0) {
     }
 }
 
-module base_hinge_profile(which = 0) {
+module base_hinge_profile(which = 0, inner = false) {
     //creates rear support, then adds the hinge part minus the centre hole, finally differences out the hole. IFs probably unnecessary here as in base_hinge
     module bmain(which = 0) {
         //if ((run == 0) || (run == 2) || (run == 3) || (run == 5)) {
@@ -648,7 +657,7 @@ module base_hinge_profile(which = 0) {
         difference() {
         bmain(which);
         translate([(wt * 4)+5, which ? th : bh, 0])
-            circle(d=hinge_rib_hole_dia(which), $fn=100);
+            circle(d=hinge_rib_hole_dia(which, inner), $fn=100);
         }
     //}
 }
@@ -664,7 +673,7 @@ module base_hinge(which = 0, addscrews = false) {
         translate([corner_distance.x,corner_distance.y-hinge_thickness * 5,0])
             rotate([90,0,0])
                 linear_extrude(height = hinge_thickness)
-                    base_hinge_profile(which);
+                    base_hinge_profile(which, inner = true);
         translate([corner_distance.x, hinge_thickness,0])
             rotate([90,0,0])
                 linear_extrude(height = hinge_thickness)
@@ -672,7 +681,7 @@ module base_hinge(which = 0, addscrews = false) {
         translate([corner_distance.x, hinge_thickness * 6, 0])
             rotate([90,0,0])
                 linear_extrude(height = hinge_thickness)
-                    base_hinge_profile(which);
+                    base_hinge_profile(which, inner = true);
     } else if (which == 1) {
 //////// hinges top
         translate([corner_distance.x,corner_distance.y - hinge_thickness - hinge_clearance, 0])
@@ -842,7 +851,7 @@ module base_plate() {
         cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
 }
 
-module base_latches_profile(which = 0) {
+module base_latches_profile(which = 0, inner = false) {
 
     //module blatch() {
     //    polygon(shBaseLatches);
@@ -852,14 +861,14 @@ module base_latches_profile(which = 0) {
                 difference() {
                     polygon(shBaseLatches);
                     translate([(wt * 4)+2, bh-10, 0]) {
-                        circle(d=latch_rib_hole_dia(which), $fn=100);
+                        circle(d=latch_rib_hole_dia(which, inner), $fn=100);
                     }
                 }
             } else {
                 difference() {
                     polygon(shTopLatches);
                     translate([(wt * 4)+2, th-10, 0]) {
-                        circle(d=latch_rib_hole_dia(which), $fn=100);
+                        circle(d=latch_rib_hole_dia(which, inner), $fn=100);
                     }
             }
             }
@@ -871,24 +880,24 @@ module base_latches(which = 0) {
         translate([0, 5, 0])
             rotate([90,0,180])
                 linear_extrude(height = 5)
-                    base_latches_profile(which);
+                    base_latches_profile(which, inner = false);
         translate([0, corner_distance.y-10, 0])
             rotate([90,0,180])
                 linear_extrude(height = 5)
-                    base_latches_profile(which);
+                    base_latches_profile(which, inner = false);
         translate([0, corner_distance.y-35, 0])
             rotate([90,0,180])
                 linear_extrude(height = 5)
-                    base_latches_profile(which);
+                    base_latches_profile(which, inner = true); //top inner
         translate([0, 30, 0])
             rotate([90,0,180])
                 linear_extrude(height = 5)
-                    base_latches_profile(which);
+                    base_latches_profile(which, inner = true); //base inner
 }
 
 module finger_latch(
-    hole_dia_a = latch_inner_rib_base_hole_dia,
-    hole_dia_b = latch_inner_rib_top_hole_dia
+    hole_dia_a = latch_outer_rib_base_hole_dia,
+    hole_dia_b = latch_outer_rib_top_hole_dia
 ) {
     union() {
         tube(
@@ -913,7 +922,7 @@ module finger_latch(
         }
         translate([-latch_thickness_offset, -latch_flat_offset, -9.65]) {
             rotate([0, 270, 0])
-                cube([latch_width- hinge_clearance, 10+latch_width- hinge_clearance, cLatchThickness]);
+                cube([latch_width- hinge_clearance, 10+latch_width- hinge_clearance, latch_thickness]);
         }
     }
 }
@@ -1014,8 +1023,8 @@ render() {
 
             if (run == "latches") {
                 finger_latch(
-                    hole_dia_a = latch_inner_rib_base_hole_dia,
-                    hole_dia_b = latch_inner_rib_top_hole_dia
+                    hole_dia_a = latch_outer_rib_base_hole_dia,
+                    hole_dia_b = latch_outer_rib_top_hole_dia
                 );
             }
 
