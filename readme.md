@@ -47,3 +47,6 @@ If you like the design, you are welcome to buy me a coffee:
 
 <a href="https://buymeacoffee.com/amead77"><img src="images/bmc-button.png" alt="Buy Me a Coffee" width="50%" /></a>
 
+## Licence
+
+CC – Attribution – Non-Commercial (CC BY-NC): Users can remix and build upon your model, but only for non-commercial purposes. Credit must be provided.
