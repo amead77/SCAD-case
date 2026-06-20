@@ -22,7 +22,7 @@ It can help you with syntax errors, some functions and stuff, but not create a m
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/20r00";
+version = "v0.1-2026/06/20r111";
 **/
 
 use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -78,10 +78,8 @@ wt = wall_thickness;
 //swc = seal_width_case;
 swo = seal_width_open;
 
-handle_hole_dia = 3.2; //0.1
-handle_thickness = 4; //0.1
-handle_height = 40; //0.1
-handle_length = 40; //0.1
+
+
 
 //the corners are rotate extruded, so are also the sides
 shBaseCorner = [
@@ -260,6 +258,54 @@ chopz = -1;
 chop_width = 150;
 chop_height = 200;
 chop_depth = 200;
+
+
+handle_hole_dia = 3.2; //0.1
+handle_thickness = 14; //0.1
+//the width of the handle is the thickness width, not the length
+handle_width = 16; //0.1
+handle_height = 40; //0.1
+handle_length = 80; //0.1
+handle_edge_radius = 1; //0.1
+handle_radius = 15;
+
+module rSquare(x,y,rd,fn = 32){
+    $fn=fn;
+    hull(){
+        translate([rd,rd,0]) circle(r= rd);
+        translate([x-rd,rd,0]) circle(r= rd);
+        translate([x-rd,y-rd,0]) circle(r= rd);
+        translate([rd,y-rd,0]) circle(r =rd);
+    }
+    
+}
+
+module handle_half() {
+/*
+rotate_extrude(angle=90, convexity=10)
+    translate([20, 0]) circle(d = handle_thickness);
+translate([20, eps, 0])
+    rotate([90, 0, 0]) cylinder(d = handle_thickness, h=handle_length+eps);
+*/
+    linear_extrude(height = handle_height) rSquare(x = handle_thickness, y = handle_width, rd = handle_edge_radius);
+    translate([-handle_radius, handle_thickness+handle_edge_radius * 2, handle_height]) rotate([90, 0, 0]) {
+        rotate_extrude(angle = 90) {
+            translate([handle_radius, 0, 0]) 
+                rSquare(x = handle_thickness, y = handle_width, rd = handle_edge_radius);
+        }
+    }
+    translate([-((handle_length/2)+handle_radius), 0, handle_height+handle_radius+handle_thickness]) rotate([0, 90, 0]) {
+        linear_extrude(height = handle_length / 2) rSquare(x = handle_thickness, y = handle_width, rd = handle_edge_radius);
+    }
+
+}
+
+module handle() {
+    handle_half();
+    translate([-((handle_length)+(handle_width * 2)-(handle_edge_radius * 2)), 0, 0]) mirror([1, 0, 0]) handle_half();
+
+}
+
 
 /*
 Create a seal that fits in the top rim of the case base section. The top of the seal is chamfered to allow 
@@ -790,6 +836,14 @@ render() {
                         finger_latch();
                     }
                 }
+                translate([-50, -50, 0]) {
+                    rotate([0, 0, 0]) {
+                        handle();
+
+                    }
+                }
+
+
             } //assembly
 
             if (run == "latches") {
