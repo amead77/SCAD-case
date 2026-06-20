@@ -22,7 +22,7 @@ It can help you with syntax errors, some functions and stuff, but not create a m
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/20r269";
+version = "v0.1-2026/06/20r291";
 **/
 
 use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -119,19 +119,23 @@ swo = seal_width_open;
 //this shouldn't change
 latch_dist_between_holes = 20.0;  //0.1
 latch_width = 19.5; //0.1
+//how thick the screw hole part is
 latch_circle_thickness = 6.0; //0.1
 //too thick and it won't flex
 latch_thickness = 2.2; //0.1
-//fudged for visualisation only
-latch_right_screw_offset = 40;
-latch_left_screw_offset = corner_distance.y - latch_right_screw_offset;
 latch_preview_outset = latch_dist_between_holes;
 //latch hole size (max 3.5)
 latch_screw_clip_clearance = 0.1;
 latch_thickness_offset = 1.7;
 latch_segment_angle = 240;
 latch_segment_rotation = 55;
-latch_flat_offset = 9;
+//latch flat length extra
+latch_flat_length_extra = 15;
+//offset the flat part of the latch
+latch_flat_offset = 13;
+//fudged for visualisation only
+latch_right_screw_offset = 40;
+latch_left_screw_offset = corner_distance.y - latch_right_screw_offset;
 
 /* [Side Supports] */
 side_support_rib_thickness = 5; //0.1
@@ -710,7 +714,7 @@ module screw(
     if (addscrews) { //hinge screws
         translate([
             corner_distance.x + 17.5, 
-            left_screw_offset, //hinge_screw_head_len + hinge_screw_len + (hinge_thickness * 4), 
+            left_screw_offset+hinge_screw_len, 
             top_height
         ]) {
             rotate([90,0,0]) {
@@ -745,7 +749,7 @@ module screw(
         //latch screws
         translate([
             -15, 
-            latch_left_screw_offset, //hinge_screw_head_len + hinge_screw_len + (hinge_thickness * 4), 
+            latch_left_screw_offset+latch_screw_len,
             top_height - 10
         ]) {
             rotate([90,0,0]) {
@@ -762,7 +766,7 @@ module screw(
         }
         translate([
             -15, 
-            latch_right_screw_offset, //corner_distance.y,//-(hinge_thickness * 3) - 10 - hinge_screw_head_len-hinge_screw_len, 
+            latch_right_screw_offset-latch_screw_len, //corner_distance.y,//-(hinge_thickness * 3) - 10 - hinge_screw_head_len-hinge_screw_len, 
             top_height - 10
         ]) {
             rotate([90,0,180]) {
@@ -779,7 +783,7 @@ module screw(
         }
         translate([
             -15, 
-            latch_left_screw_offset, //hinge_screw_head_len + hinge_screw_len + (hinge_thickness * 4), 
+            latch_left_screw_offset+latch_screw_len, //hinge_screw_head_len + hinge_screw_len + (hinge_thickness * 4), 
             top_height + 10
         ]) {
             rotate([90,0,0]) {
@@ -796,7 +800,7 @@ module screw(
         }
         translate([
             -15, 
-            latch_right_screw_offset, //corner_distance.y,//-(hinge_thickness * 3) - 10 - hinge_screw_head_len-hinge_screw_len, 
+            latch_right_screw_offset-latch_screw_len, //corner_distance.y,//-(hinge_thickness * 3) - 10 - hinge_screw_head_len-hinge_screw_len, 
             top_height + 10
         ]) {
             rotate([90,0,180]) {
@@ -922,7 +926,7 @@ module finger_latch(
         }
         translate([-latch_thickness_offset, -latch_flat_offset, -9.65]) {
             rotate([0, 270, 0])
-                cube([latch_width- hinge_clearance, 10+latch_width- hinge_clearance, latch_thickness]);
+                cube([latch_width- hinge_clearance, latch_flat_length_extra+latch_width- hinge_clearance, latch_thickness]);
         }
     }
 }
