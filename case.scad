@@ -22,7 +22,7 @@ It can help you with syntax errors, some functions and stuff, but not create a m
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/20r291";
+version = "v0.1-2026/06/20r292";
 **/
 
 use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -731,7 +731,7 @@ module screw(
         }
         translate([
             corner_distance.x + 17.5, 
-            right_screw_offset, //corner_distance.y,//-(hinge_thickness * 3) - 10 - hinge_screw_head_len-hinge_screw_len, 
+            right_screw_offset-hinge_screw_len, //corner_distance.y,//-(hinge_thickness * 3) - 10 - hinge_screw_head_len-hinge_screw_len, 
             top_height
         ]) {
             rotate([90,0,180]) {
