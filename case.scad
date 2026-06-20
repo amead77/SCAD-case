@@ -22,7 +22,7 @@ It can help you with syntax errors, some functions and stuff, but not create a m
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/20r236";
+version = "v0.1-2026/06/20r239";
 **/
 
 use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -44,8 +44,8 @@ base_thickness = 4;  //0.1
 
 /* [Hinge] */
 
-//hinge hole size
-hinge_hole = 3.2; //0.1
+//hinge hole size (legacy, replaced by hinge_outer_rib_hole_dia / hinge_inner_rib_hole_dia)
+//hinge_hole = 3.2; //0.1
 //thickness for outer hinge and 2x is inner hinge
 hinge_thickness = 4.0; //0.1
 hinge_clearance = 0.2; //0.1
@@ -72,8 +72,8 @@ latch_inner_rib_base_hole_dia = 3.2; //0.1
 //handle hole can be different from the latch rib holes
 handle_hole_dia = 3.2; //0.1
 
-//actual latch hole sizes, not the support ribs
-latch_hole = 3.2;  //0.1
+//actual latch hole sizes, not the support ribs (legacy, replaced by latch_inner_rib_*_hole_dia)
+//latch_hole = 3.2;  //0.1
 latch_screw_dia = 3.0; //0.1
 latch_screw_len = 35; //0.1
 latch_screw_head_dia = 6; //0.1
@@ -530,6 +530,12 @@ function reinforce_x(i) =
         ? (corner_distance.x / 2)
         : (side_reinforce_first_offset + i * ((side_reinforce_spacing > 0) ? side_reinforce_spacing : reinforce_spacing_auto()));
 
+function hinge_rib_hole_dia(which) =
+    which == 0 ? hinge_outer_rib_hole_dia : hinge_inner_rib_hole_dia;
+
+function latch_rib_hole_dia(which) =
+    which == 0 ? latch_outer_rib_base_hole_dia : latch_outer_rib_top_hole_dia;
+
 
 module reinforce_pair_at(xpos, which = 0) {
     half_t = side_support_rib_thickness / 2;
@@ -642,7 +648,7 @@ module base_hinge_profile(which = 0) {
         difference() {
         bmain(which);
         translate([(wt * 4)+5, which ? th : bh, 0])
-            circle(d=hinge_hole, $fn=100);
+            circle(d=hinge_rib_hole_dia(which), $fn=100);
         }
     //}
 }
@@ -699,6 +705,7 @@ module screw(
             top_height
         ]) {
             rotate([90,0,0]) {
+                translate([0, 0, hinge_screw_len])
                 screw(
                     thread_dia = hinge_screw_dia,
                     thread_len = hinge_screw_len,
@@ -715,6 +722,7 @@ module screw(
             top_height
         ]) {
             rotate([90,0,180]) {
+                translate([0, 0, hinge_screw_len])
                 screw(
                     thread_dia = hinge_screw_dia,
                     thread_len = hinge_screw_len,
@@ -732,6 +740,7 @@ module screw(
             top_height - 10
         ]) {
             rotate([90,0,0]) {
+                translate([0, 0, latch_screw_len])
                 screw(
                     thread_dia = latch_screw_dia,
                     thread_len = latch_screw_len,
@@ -748,6 +757,7 @@ module screw(
             top_height - 10
         ]) {
             rotate([90,0,180]) {
+                translate([0, 0, latch_screw_len])
                 screw(
                     thread_dia = latch_screw_dia,
                     thread_len = latch_screw_len,
@@ -764,6 +774,7 @@ module screw(
             top_height + 10
         ]) {
             rotate([90,0,0]) {
+                translate([0, 0, latch_screw_len])
                 screw(
                     thread_dia = latch_screw_dia,
                     thread_len = latch_screw_len,
@@ -780,6 +791,7 @@ module screw(
             top_height + 10
         ]) {
             rotate([90,0,180]) {
+                translate([0, 0, latch_screw_len])
                 screw(
                     thread_dia = latch_screw_dia,
                     thread_len = latch_screw_len,
@@ -840,14 +852,14 @@ module base_latches_profile(which = 0) {
                 difference() {
                     polygon(shBaseLatches);
                     translate([(wt * 4)+2, bh-10, 0]) {
-                        circle(d=latch_hole, $fn=100);
+                        circle(d=latch_rib_hole_dia(which), $fn=100);
                     }
                 }
             } else {
                 difference() {
                     polygon(shTopLatches);
                     translate([(wt * 4)+2, th-10, 0]) {
-                        circle(d=latch_hole, $fn=100);
+                        circle(d=latch_rib_hole_dia(which), $fn=100);
                     }
             }
             }
@@ -874,13 +886,16 @@ module base_latches(which = 0) {
                     base_latches_profile(which);
 }
 
-module finger_latch() {
+module finger_latch(
+    hole_dia_a = latch_inner_rib_base_hole_dia,
+    hole_dia_b = latch_inner_rib_top_hole_dia
+) {
     union() {
         tube(
             od_base = latch_circle_thickness-0.5,
             od_top = latch_circle_thickness-0.5,
-            id_base = latch_screw_dia+latch_screw_clip_clearance,
-            id_top = latch_screw_dia+latch_screw_clip_clearance,
+            id_base = hole_dia_a+latch_screw_clip_clearance,
+            id_top = hole_dia_a+latch_screw_clip_clearance,
             length = latch_width - hinge_clearance,
             segment_angle = latch_segment_angle,
             rotation = latch_segment_rotation
@@ -889,8 +904,8 @@ module finger_latch() {
             tube(
                 od_base = latch_circle_thickness,
                 od_top = latch_circle_thickness,
-                id_base = latch_screw_dia+latch_screw_clip_clearance,
-                id_top = latch_screw_dia+latch_screw_clip_clearance,
+                id_base = hole_dia_b+latch_screw_clip_clearance,
+                id_top = hole_dia_b+latch_screw_clip_clearance,
                 length = latch_width - hinge_clearance,
                 segment_angle = 0,
                 rotation = 0
@@ -998,7 +1013,10 @@ render() {
             } //assembly
 
             if (run == "latches") {
-                finger_latch();
+                finger_latch(
+                    hole_dia_a = latch_inner_rib_base_hole_dia,
+                    hole_dia_b = latch_inner_rib_top_hole_dia
+                );
             }
 
             if (run == "handle") {
@@ -1018,6 +1036,7 @@ render() {
                 generate_seal();
             }
             if (run == "hinge_screw") {
+                translate([0, 0, hinge_screw_len])
                 screw(
                     thread_dia = hinge_screw_dia,
                     thread_len = hinge_screw_len,
@@ -1028,11 +1047,12 @@ render() {
                 );
             }
             if (run == "latch_screw") {
+                translate([0, 0, latch_screw_len])
                 screw(
-                    thread_dia = hinge_screw_dia,
-                    thread_len = hinge_screw_len,
-                    head_dia = hinge_screw_head_dia,
-                    head_len = hinge_screw_head_len,
+                    thread_dia = latch_screw_dia,
+                    thread_len = latch_screw_len,
+                    head_dia = latch_screw_head_dia,
+                    head_len = latch_screw_head_len,
                     head_cs = false,
                     translate_head = true
                 );
