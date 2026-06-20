@@ -16,7 +16,8 @@ The model is driven by variables in the OpenSCAD Customizer, so you can tune dim
 But why? Well, I started this sometime in 2022, maybe 2021. As a direct result of fighting with Fusion 360 and a desire to unlink myself from commercial subscription software usage. This became especially important after Autodesk paywalled previously free features.
 
 So, I decided to learn OpenSCAD. How hard can it be, right?
-Anyway, I got to the point where I'd created the base, hinges, support ribs, and latch ribs. At that point I just ran out of steam. I'd created a monster. I could barely follow my own code, purely because I used a lot of hard coded points in space and 2D arrays of data points.
+Anyway, I got to the point where I'd created the base, hinges, support ribs, and latch ribs. At that point I just ran out of steam. I'd created a monster. I could barely follow my own code, purely because I used a lot of hard coded points in space and 2D arrays of data points. I posted to Reddit about this time, and people liked it as it created the whole base and top of the box, just lacked latches, but no one offered to assist. I removed it and put it on the back burner.
+
 Sometime in 2024 I came back to it and started to un-frack it. But again, after a while I ran out of steam and still hadn't even created the latches.
 
 Then came 2026, I was designing a lunchbox (don't ask) and needed a case. Well, what do you know. I have one of those already - but it wasn't finished. Nevermind, I found a couple of other OpenSCAD rugged case designs online. Except they didn't fit my requirements, had their own issues I'd need to fix, and I just didn't want to accept defeat.
