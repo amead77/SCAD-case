@@ -22,7 +22,7 @@ It can help you with syntax errors, some functions and stuff, but not create a m
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/20r130";
+version = "v0.1-2026/06/20r138";
 **/
 
 use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -30,7 +30,7 @@ $fn = 32;
 //Choose part / Assembly view
 run = "assembly"; //[assembly, base, top, latches, handle, seal]
 //x,y size. This is actually to to begining of each corner radius. Design choices my dude... Render and measure edge to edge.
-corner_distance = [100, 100]; 
+corner_distance = [150, 150]; 
 //muliples of nozzle size
 wall_thickness = 3.2;  //0.1
 //max 2x wall_thickness
@@ -263,9 +263,9 @@ chop_depth = 200;
 //hole size in the handle for mounting
 handle_hole_dia = 3.2; //0.1
 //how thick the handle is, as in, how deep if laid down flat
-handle_thickness = 14; //0.1
+handle_thickness = 4; //0.1
 //the width of the handle is the thickness of the extrusion, not the width of the handle overall
-handle_width = 16; //0.1
+handle_width = 8; //0.1
 //how tall it is, as in the top to bottom of the U shape
 handle_height = 40; //0.1
 //how wide the handle is overall, as in the outer sides of the U shape
@@ -275,6 +275,9 @@ handle_edge_radius = 1; //0.1
 //the bend radius of the U shape
 handle_radius = 15;
 
+/*
+Create a rounded square (or rect)
+*/
 module rSquare(x,y,rd,fn = 32){
     $fn=fn;
     hull(){
@@ -286,59 +289,120 @@ module rSquare(x,y,rd,fn = 32){
     
 }
 
-module handle_half() {
-    union() {
-        difference() {
-            union() {
-                linear_extrude(height = handle_height) rSquare(x = handle_thickness, y = handle_width, rd = handle_edge_radius);
-                translate([-handle_radius, handle_thickness+handle_edge_radius * 2, handle_height]) rotate([90, 0, 0]) {
-                    rotate_extrude(angle = 90) {
-                        translate([handle_radius, 0, 0]) 
-                            rSquare(x = handle_thickness, y = handle_width, rd = handle_edge_radius);
-                    }
-                }
-                translate([-((handle_length/2)+handle_radius), 0, handle_height+handle_radius+handle_thickness]) rotate([0, 90, 0]) {
-                    linear_extrude(height = handle_length / 2) rSquare(x = handle_thickness, y = handle_width, rd = handle_edge_radius);
+// Helper module to center the profile cleanly for extrusions
+module profile_centered(w, t, r_edge) {
+    translate([-w / 2, -t / 2, 0]) rSquare(w, t, r_edge);
+}
+
+module handle_half(
+    handle_hole_dia = 3.2,
+    handle_thickness = 14,   // Depth of handle profile (Y axis)
+    handle_width = 16,       // Width of handle profile (X axis)
+    handle_height = 40,      // Total height from pivot center to top edge
+    handle_length = 80,      // Total length from outside edge to outside edge
+    handle_edge_radius = 1,  // Fillet radius for the profile edges
+    handle_radius = 15       // Inside bend radius of the U-turn
+) {
+    w = handle_width;
+    t = handle_thickness;
+    r_edge = handle_edge_radius;
+    
+    // Calculate precise bend radiuses
+    r_inner = handle_radius;
+    r_center = r_inner + w / 2;
+    r_outer = r_inner + w;
+    
+    // Straight leg height extends from pivot center (Z=0) up to the bend start
+    leg_straight_height = handle_height - r_outer;
+    top_straight_half_length = (handle_length / 2) - r_outer;
+    
+    // Center point of this leg's pivot axis
+    leg_x_center = (handle_length / 2) - w / 2;
+    
+    difference() {
+        union() {
+            // 1. Straight Vertical Leg
+            translate([leg_x_center, 0, 0]) {
+                linear_extrude(height = leg_straight_height) {
+                    profile_centered(w, t, r_edge);
                 }
             }
-
-            translate([handle_width/2, handle_thickness/2,0]) {
+            
+            // 2. 90-Degree Curved Bend
+            translate([(handle_length / 2) - r_outer, 0, leg_straight_height]) {
+                rotate([90, 0, 0]) {
+                    rotate_extrude(angle = 90, $fn = 64) {
+                        translate([r_center, 0, 0]) {
+                            profile_centered(w, t, r_edge);
+                        }
+                    }
+                }
+            }
+            
+            // 3. Straight Horizontal Top Bar (Half)
+            translate([0, 0, handle_height - w / 2]) {
+                rotate([0, 90, 0]) {
+                    linear_extrude(height = top_straight_half_length) {
+                        profile_centered(w, t, r_edge);
+                    }
+                }
+            }
+            
+            // 4. Solid Pivot Rounding (Using your tube module with ID=0)
+            translate([leg_x_center, 0, 0]) {
                 rotate([0, 90, 0]) {
                     tube(
-                        od_base = handle_thickness,
-                        od_top = handle_thickness,
+                        od_base = t,
+                        od_top = t,
                         id_base = 0,
                         id_top = 0,
-                        length = handle_width
+                        length = w,
+                        center = true,
+                        $fn = 64
                     );
                 }
             }
         }
-        translate([handle_width/2, handle_thickness/2,0]) {
+        
+        // 5. Side Mounting Pivot Hole (Drilled clear through the leg along X axis)
+        translate([leg_x_center, 0, 0]) {
             rotate([0, 90, 0]) {
                 tube(
-                    od_base = handle_thickness,
-                    od_top = handle_thickness,
-                    id_base = handle_hole_dia,
-                    id_top = handle_hole_dia,
-                    length = handle_width
+                    od_base = handle_hole_dia,
+                    od_top = handle_hole_dia,
+                    id_base = 0,
+                    id_top = 0,
+                    length = w + 2, // slightly longer for a clean render cut
+                    center = true,
+                    $fn = 32
                 );
             }
         }
     }
-
 }
 
 /*
-Creates the actual handle, by creating half, then mirroring the 2 halves together.
+Creates the actual handle by joining two perfectly mirrored halves at X = 0
 */
-module handle() {
+module handle(
+    handle_hole_dia = 3.2,
+    handle_thickness = 14,
+    handle_width = 16,
+    handle_height = 40,
+    handle_length = 80,
+    handle_edge_radius = 1,
+    handle_radius = 15
+) {
     union() {
-        handle_half();
-        translate([-((handle_length)+(handle_width * 2)-(handle_edge_radius * 2)), 0, 0]) {
-            mirror([1, 0, 0]) {
-                handle_half();
-            }
+        handle_half(
+            handle_hole_dia, handle_thickness, handle_width, 
+            handle_height, handle_length, handle_edge_radius, handle_radius
+        );
+        mirror([1, 0, 0]) {
+            handle_half(
+                handle_hole_dia, handle_thickness, handle_width, 
+                handle_height, handle_length, handle_edge_radius, handle_radius
+            );
         }
     }
 }
@@ -875,8 +939,15 @@ render() {
                 }
                 translate([-50, -50, 0]) {
                     rotate([0, 0, 0]) {
-                        handle();
-
+                handle(
+                    handle_hole_dia = handle_hole_dia,
+                    handle_thickness = handle_thickness,
+                    handle_width = handle_width,
+                    handle_height = handle_height,
+                    handle_length = handle_length,
+                    handle_edge_radius = handle_edge_radius,
+                    handle_radius = handle_radius
+                ); 
                     }
                 }
 
