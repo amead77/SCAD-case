@@ -22,14 +22,14 @@ It can help you with syntax errors, some functions and stuff, but not create a m
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/19r563";
+version = "v0.1-2026/06/20r00";
 **/
 
 use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
 $fn = 32;
 //Choose part / Assembly view
 run = "assembly"; //[assembly, base, top, latches, handle, seal]
-//x,y size
+//x,y size. This is actually to to begining of each corner radius. Design choices my dude... Render and measure edge to edge.
 corner_distance = [100, 100]; 
 //muliples of nozzle size
 wall_thickness = 3.2;  //0.1
@@ -78,6 +78,10 @@ wt = wall_thickness;
 //swc = seal_width_case;
 swo = seal_width_open;
 
+handle_hole_dia = 3.2; //0.1
+handle_thickness = 4; //0.1
+handle_height = 40; //0.1
+handle_length = 40; //0.1
 
 //the corners are rotate extruded, so are also the sides
 shBaseCorner = [
