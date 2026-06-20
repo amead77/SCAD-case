@@ -66,4 +66,4 @@ If you like the design, you are welcome to buy me a coffee:
 
 ## Licence
 
-CC – Attribution – Non-Commercial (CC BY-NC): Users can remix and build upon your model, but only for non-commercial purposes. Credit must be provided.
+CC – Attribution – Non-Commercial (CC BY-NC): Users can remix and build upon my model, but only for non-commercial purposes. Credit must be provided. (I literally stole this licence text)
