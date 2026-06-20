@@ -22,7 +22,7 @@ It can help you with syntax errors, some functions and stuff, but not create a m
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/20r170";
+version = "v0.1-2026/06/20r177";
 **/
 
 use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -265,7 +265,7 @@ chop_depth = 200;
 //hole size in the handle for mounting
 handle_hole_dia = 3.2; //0.1
 //how thick the handle is, as in, how deep if laid down flat
-handle_thickness = 5; //0.1
+handle_thickness = 6; //0.1
 //the width of the handle is the thickness of the extrusion, not the width of the handle overall
 handle_width = 8; //0.1
 //how tall it is, as in the top to bottom of the U shape
@@ -279,7 +279,7 @@ handle_edge_radius = 1; //0.1
 //the bend radius of the U shape
 handle_radius = 15;
 //assembly visualise only, rotate the handle by this much degrees
-handle_rotation = 45;
+handle_rotation = 180; //[0:180]
 /*
 Create a rounded square (or rect)
 */
@@ -945,17 +945,17 @@ render() {
                     }
                 }
                 translate([-15, handle_preview_y, base_height-10]) {
-                    rotate([0, 0, 90]) {
-                handle(
-                    handle_hole_dia = handle_hole_dia,
-                    handle_thickness = handle_thickness,
-                    handle_width = handle_width,
-                    handle_height = handle_height,
-                    handle_length = handle_length,
-                    handle_edge_radius = handle_edge_radius,
-                    handle_radius = handle_radius,
-                    handle_screw_mount_offset_length = handle_screw_mount_offset_length
-                ); 
+                    rotate([-handle_rotation, 0, 90]) {
+                        handle(
+                            handle_hole_dia = handle_hole_dia,
+                            handle_thickness = handle_thickness,
+                            handle_width = handle_width,
+                            handle_height = handle_height,
+                            handle_length = handle_length,
+                            handle_edge_radius = handle_edge_radius,
+                            handle_radius = handle_radius,
+                            handle_screw_mount_offset_length = handle_screw_mount_offset_length
+                        ); 
                     }
                 }
 
