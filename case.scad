@@ -22,34 +22,34 @@ It can help you with syntax errors, some functions and stuff, but not create a m
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/20r00";
+version = "v0.1-2026/06/20r192";
 **/
 
 use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
 $fn = 32;
 //Choose part / Assembly view
-run = "assembly"; //[assembly, base, top, latches, handle, seal]
+run = "assembly"; //[assembly, base, top, latches, handle, seal, screw]
 //x,y size. This is actually to to begining of each corner radius. Design choices my dude... Render and measure edge to edge.
-corner_distance = [100, 100]; 
+corner_distance = [165, 165]; 
 //muliples of nozzle size
 wall_thickness = 3.2;  //0.1
 //max 2x wall_thickness
 base_thickness = 4;  //0.1
 //height of base bottom (min 20mm or it weirds out)
-base_height = 30; //0.1
+base_height = 40; //0.1
 top_height = 20; //0.1
 //hinge hole size
-hinge_hole = 1.8; //0.1
+hinge_hole = 3.2; //0.1
 //thickness for outer hinge and 2x is inner hinge
 hinge_thickness = 4.0; //0.1
 hinge_clearance = 0.2; //0.1
 hinge_screw_len = 35; //0.1
-hinge_screw_dia = 1.75; //0.1
-hinge_screw_head_dia = 6; //0.1
+hinge_screw_dia = 3.0; //0.1
+hinge_screw_head_dia = 7; //0.1
 hinge_screw_head_len = 4; //0.1
 //fudged for visualisation only
-left_screw_offset = 115;
 right_screw_offset = 35;
+left_screw_offset = corner_distance.y - right_screw_offset;
 
 
 //changing this affects the angle of the seal outer. use for printing support ease. Min is lip_z = 8
@@ -78,10 +78,8 @@ wt = wall_thickness;
 //swc = seal_width_case;
 swo = seal_width_open;
 
-handle_hole_dia = 3.2; //0.1
-handle_thickness = 4; //0.1
-handle_height = 40; //0.1
-handle_length = 40; //0.1
+
+
 
 //the corners are rotate extruded, so are also the sides
 shBaseCorner = [
@@ -228,16 +226,20 @@ cLatchCircle = 6.0; //0.1
 //too thick and it won't flex
 cLatchThickness = 3; //0.1
 latch_screw_len = 25; //0.1
-latch_screw_dia = 3; //0.1
+latch_screw_dia = 3.2; //0.1
 latch_screw_head_dia = 6; //0.1
 latch_screw_head_len = 4; //0.1
 //fudged for visualisation only
-latch_left_screw_offset = 110;
 latch_right_screw_offset = 40;
+latch_left_screw_offset = corner_distance.y - latch_right_screw_offset;
+handle_preview_y = (latch_left_screw_offset + latch_right_screw_offset) / 2;
+latch_preview_outset = cLatchBetweenHoles;
 //latch hole size (max 3.5)
 latch_hole = 3.2;  //0.1
 latch_screw_clip_clearance = 0.1;
-latch_thickness = 1.6;
+latch_thickness_offset = 1.6;
+latch_segment_angle = 240;
+latch_segment_rotation = 55;
 
 
 side_support_rib_thickness = 5; //0.1
@@ -260,6 +262,160 @@ chopz = -1;
 chop_width = 150;
 chop_height = 200;
 chop_depth = 200;
+
+
+//hole size in the handle for mounting
+handle_hole_dia = 3.2; //0.1
+//how thick the handle is, as in, how deep if laid down flat
+handle_thickness = 6; //0.1
+//the width of the handle is the thickness of the extrusion, not the width of the handle overall
+handle_width = 8; //0.1
+//how tall it is, as in the top to bottom of the U shape
+handle_height = 40; //0.1
+//how wide the handle is overall, as in the outer sides of the U shape. this should be set to match the outside edges of the inner latch ribs
+handle_length = 80; //0.1
+//add this much to the outside edges of the screw holes on the handle, so the handle doesn't interfere with other parts.
+handle_screw_mount_offset_length = 7.0; //0.1
+//rounding of the edges of the handle
+handle_edge_radius = 1; //0.1
+//the bend radius of the U shape
+handle_radius = 15;
+//assembly visualise only, rotate the handle by this much degrees
+handle_rotation = 180; //[0:180]
+/*
+Create a rounded square (or rect)
+*/
+module rSquare(x,y,rd,fn = 32){
+    $fn=fn;
+    hull(){
+        translate([rd,rd,0]) circle(r= rd);
+        translate([x-rd,rd,0]) circle(r= rd);
+        translate([x-rd,y-rd,0]) circle(r= rd);
+        translate([rd,y-rd,0]) circle(r =rd);
+    }
+    
+}
+
+// Helper module to center the profile cleanly for extrusions
+module profile_centered(w, t, r_edge) {
+    translate([-w / 2, -t / 2, 0]) rSquare(w, t, r_edge);
+}
+
+module handle_half(
+    handle_hole_dia = 3.2,
+    handle_thickness = 14,   // Depth of handle profile (Y axis)
+    handle_width = 16,       // Width of handle profile (X axis)
+    handle_height = 40,      // Total height from pivot center to top edge
+    handle_length = 80,      // Total length from outside edge to outside edge
+    handle_edge_radius = 1,  // Fillet radius for the profile edges
+    handle_radius = 15,       // Inside bend radius of the U-turn
+    handle_screw_mount_offset_length = 4
+) {
+    w = handle_width;
+    t = handle_thickness;
+    r_edge = handle_edge_radius;
+    
+    // Calculate precise bend radiuses
+    r_inner = handle_radius;
+    r_center = r_inner + w / 2;
+    r_outer = r_inner + w;
+    
+    // Straight leg height extends from pivot center (Z=0) up to the bend start
+    leg_straight_height = handle_height - r_outer;
+    top_straight_half_length = (handle_length / 2) - r_outer;
+    
+    // Center point of this leg's pivot axis
+    leg_x_center = (handle_length / 2) - w / 2;
+    
+    difference() {
+        union() {
+            // 1. Straight Vertical Leg
+            translate([leg_x_center, 0, 0]) {
+                linear_extrude(height = leg_straight_height) {
+                    profile_centered(w, t, r_edge);
+                }
+            }
+            
+            // 2. 90-Degree Curved Bend
+            translate([(handle_length / 2) - r_outer, 0, leg_straight_height]) {
+                rotate([90, 0, 0]) {
+                    rotate_extrude(angle = 90, $fn = 64) {
+                        translate([r_center, 0, 0]) {
+                            profile_centered(w, t, r_edge);
+                        }
+                    }
+                }
+            }
+            
+            // 3. Straight Horizontal Top Bar (Half)
+            translate([0, 0, handle_height - w / 2]) {
+                rotate([0, 90, 0]) {
+                    linear_extrude(height = top_straight_half_length) {
+                        profile_centered(w, t, r_edge);
+                    }
+                }
+            }
+            
+            // 4. Solid Pivot Rounding (Using your tube module with ID=0)
+            translate([leg_x_center+handle_screw_mount_offset_length/2, 0, 0]) {
+                rotate([0, 90, 0]) {
+                    tube(
+                        od_base = t,
+                        od_top = t,
+                        id_base = 0,
+                        id_top = 0,
+                        length = w + handle_screw_mount_offset_length,
+                        center = true,
+                        $fn = 64
+                    );
+                }
+            }
+        }
+        
+        // 5. Side Mounting Pivot Hole (Drilled clear through the leg along X axis)
+        translate([leg_x_center+handle_screw_mount_offset_length/2, 0, 0]) {
+            rotate([0, 90, 0]) {
+                tube(
+                    od_base = handle_hole_dia,
+                    od_top = handle_hole_dia,
+                    id_base = 0,
+                    id_top = 0,
+                    length = w + 2+handle_screw_mount_offset_length, // slightly longer for a clean render cut
+                    center = true,
+                    $fn = 32
+                );
+            }
+        }
+    }
+}
+
+/*
+Creates the actual handle by joining two perfectly mirrored halves at X = 0
+*/
+module handle(
+    handle_hole_dia = 3.2,
+    handle_thickness = 14,
+    handle_width = 16,
+    handle_height = 40,
+    handle_length = 80,
+    handle_edge_radius = 1,
+    handle_radius = 15,
+    handle_screw_mount_offset_length = 4
+) {
+    union() {
+        handle_half(
+            handle_hole_dia, handle_thickness, handle_width, 
+            handle_height, handle_length, handle_edge_radius, handle_radius, handle_screw_mount_offset_length
+        );
+        mirror([1, 0, 0]) {
+            handle_half(
+                handle_hole_dia, handle_thickness, handle_width, 
+                handle_height, handle_length, handle_edge_radius, handle_radius, handle_screw_mount_offset_length
+            );
+        }
+    }
+}
+
 
 /*
 Create a seal that fits in the top rim of the case base section. The top of the seal is chamfered to allow 
@@ -693,8 +849,8 @@ module finger_latch() {
             id_base = latch_screw_dia+latch_screw_clip_clearance,
             id_top = latch_screw_dia+latch_screw_clip_clearance,
             length = cLatchWidth - hinge_clearance,
-            segment_angle = 240,
-            rotation = 55
+            segment_angle = latch_segment_angle,
+            rotation = latch_segment_rotation
         );
         translate([0, cLatchBetweenHoles, 0]) {
             tube(
@@ -707,9 +863,9 @@ module finger_latch() {
                 rotation = 0
             );
         }
-        translate([-latch_thickness, -9, -9.65]) {
+        translate([-latch_thickness_offset, -9, -9.65]) {
             rotate([0, 270, 0])
-                cube([cLatchWidth- hinge_clearance, 10+cLatchWidth- hinge_clearance, latch_thickness]);
+                cube([cLatchWidth- hinge_clearance, 10+cLatchWidth- hinge_clearance, cLatchThickness]);
         }
     }
 }
@@ -780,16 +936,32 @@ render() {
                 translate([0, 0, 0.0]) {
                     generate_seal();
                 }
-                translate([-15, 130, base_height-10]) {
+                translate([-15, latch_left_screw_offset + latch_preview_outset, base_height-10]) {
                     rotate([90, 0, 0]) {
                         finger_latch();
                     }
                 }
-                translate([-15, 20, base_height-10]) {
+                translate([-15, latch_right_screw_offset - latch_preview_outset, base_height-10]) {
                     rotate([90, 0, 0]) {
                         finger_latch();
                     }
                 }
+                translate([-15, handle_preview_y, base_height-10]) {
+                    rotate([-handle_rotation, 0, 90]) {
+                        handle(
+                            handle_hole_dia = handle_hole_dia,
+                            handle_thickness = handle_thickness,
+                            handle_width = handle_width,
+                            handle_height = handle_height,
+                            handle_length = handle_length,
+                            handle_edge_radius = handle_edge_radius,
+                            handle_radius = handle_radius,
+                            handle_screw_mount_offset_length = handle_screw_mount_offset_length
+                        ); 
+                    }
+                }
+
+
             } //assembly
 
             if (run == "latches") {
@@ -797,11 +969,30 @@ render() {
             }
 
             if (run == "handle") {
-
+                handle(
+                    handle_hole_dia = handle_hole_dia,
+                    handle_thickness = handle_thickness,
+                    handle_width = handle_width,
+                    handle_height = handle_height,
+                    handle_length = handle_length,
+                    handle_edge_radius = handle_edge_radius,
+                    handle_radius = handle_radius,
+                    handle_screw_mount_offset_length = handle_screw_mount_offset_length
+                ); 
             }
 
             if (run == "seal") {
                 generate_seal();
+            }
+            if (run == "screw") {
+                screw(
+                    thread_dia = hinge_screw_dia,
+                    thread_len = hinge_screw_len,
+                    head_dia = hinge_screw_head_dia,
+                    head_len = hinge_screw_head_len,
+                    head_cs = false,
+                    translate_head = true
+                );
             }
         } //union, for separating for differencing
 
