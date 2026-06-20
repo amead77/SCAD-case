@@ -22,35 +22,66 @@ It can help you with syntax errors, some functions and stuff, but not create a m
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/20r192";
+version = "v0.1-2026/06/20r292";
 **/
 
 use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
 $fn = 32;
+
 //Choose part / Assembly view
-run = "assembly"; //[assembly, base, top, latches, handle, seal, screw]
-//x,y size. This is actually to to begining of each corner radius. Design choices my dude... Render and measure edge to edge.
+/* [Part Chooser] */
+run = "assembly"; //[assembly, base, top, latches, handle, seal, hinge_screw, latch_screw]
+/* [Basic Dimensions] */
+//x,y size. This is actually to the begining of each corner radius. Design choices my dude... Render and measure edge to edge.
 corner_distance = [165, 165]; 
-//muliples of nozzle size
-wall_thickness = 3.2;  //0.1
-//max 2x wall_thickness
-base_thickness = 4;  //0.1
 //height of base bottom (min 20mm or it weirds out)
 base_height = 40; //0.1
 top_height = 20; //0.1
-//hinge hole size
-hinge_hole = 3.2; //0.1
+//muliples of nozzle size
+wall_thickness = 3.2;  //0.1
+//max 2x wall_thickness, chop model to see better what goes on
+base_thickness = 4;  //0.1
+
+/* [Hinge] */
+
+//hinge hole size (legacy, replaced by hinge_outer_rib_hole_dia / hinge_inner_rib_hole_dia)
+//hinge_hole = 3.2; //0.1
 //thickness for outer hinge and 2x is inner hinge
 hinge_thickness = 4.0; //0.1
 hinge_clearance = 0.2; //0.1
-hinge_screw_len = 35; //0.1
-hinge_screw_dia = 3.0; //0.1
-hinge_screw_head_dia = 7; //0.1
-hinge_screw_head_len = 4; //0.1
 //fudged for visualisation only
 right_screw_offset = 35;
 left_screw_offset = corner_distance.y - right_screw_offset;
 
+
+/* [Screw and hole sizing] */
+//the top and bottom holes must match, but inner/outer can be different for screwing into the plastic on one side, top case hinge hole will match hinge_outer_rib_hole_dia
+hinge_outer_rib_hole_dia = 3.2; //0.1
+hinge_inner_rib_hole_dia = 3.0; //0.1
+
+//the top case latch rib hole sizing can be differrent from the base, as adding a handle could change how you want to attach
+latch_outer_rib_top_hole_dia = 3.2; //0.1
+latch_inner_rib_top_hole_dia = 3.2; //0.1
+latch_outer_rib_base_hole_dia = 3.2; //0.1
+latch_inner_rib_base_hole_dia = 3.2; //0.1
+
+//handle hole can be different from the latch rib holes
+handle_hole_dia = 3.2; //0.1
+
+//actual latch hole sizes, not the support ribs (legacy, replaced by latch_inner_rib_*_hole_dia)
+//latch_hole = 3.2;  //0.1
+latch_screw_dia = 3.0; //0.1
+latch_screw_len = 35; //0.1
+latch_screw_head_dia = 6; //0.1
+latch_screw_head_len = 4; //0.1
+hinge_screw_len = 35; //0.1
+hinge_screw_dia = 3.0; //0.1
+hinge_screw_head_dia = 7; //0.1
+hinge_screw_head_len = 4; //0.1
+
+
+
+/* [Seal and Lip] */
 
 //changing this affects the angle of the seal outer. use for printing support ease. Min is lip_z = 8
 base_lip_z = 8; //0.1
@@ -80,6 +111,75 @@ swo = seal_width_open;
 
 
 
+
+
+/* [Latches] */
+
+///////////////////come back to here
+//this shouldn't change
+latch_dist_between_holes = 20.0;  //0.1
+latch_width = 19.5; //0.1
+//how thick the screw hole part is
+latch_circle_thickness = 6.0; //0.1
+//too thick and it won't flex
+latch_thickness = 2.2; //0.1
+latch_preview_outset = latch_dist_between_holes;
+//latch hole size (max 3.5)
+latch_screw_clip_clearance = 0.1;
+latch_thickness_offset = 1.7;
+latch_segment_angle = 240;
+latch_segment_rotation = 55;
+//latch flat length extra
+latch_flat_length_extra = 15;
+//offset the flat part of the latch
+latch_flat_offset = 13;
+//fudged for visualisation only
+latch_right_screw_offset = 40;
+latch_left_screw_offset = corner_distance.y - latch_right_screw_offset;
+
+/* [Side Supports] */
+side_support_rib_thickness = 5; //0.1
+//reinforcement count
+side_reinforce_count = 3; // [1:1:8]
+//offset from edge
+side_reinforce_first_offset = 10; // [4:1:60]
+// 0 = auto spread between edge offsets
+side_reinforce_spacing = 0; 
+
+
+/* [Handle] */
+handle_preview_y = (latch_left_screw_offset + latch_right_screw_offset) / 2;
+
+//how thick the handle is, as in, how deep if laid down flat
+handle_thickness = 6; //0.1
+//the width of the handle is the thickness of the extrusion, not the width of the handle overall
+handle_width = 8; //0.1
+//how tall it is, as in the top to bottom of the U shape
+handle_height = 40; //0.1
+//how wide the handle is overall, as in the outer sides of the U shape. this should be set to match the outside edges of the inner latch ribs
+handle_length = 80; //0.1
+//add this much to the outside edges of the screw holes on the handle, so the handle doesn't interfere with other parts.
+handle_screw_mount_offset_length = 7.0; //0.1
+//rounding of the edges of the handle
+handle_edge_radius = 1; //0.1
+//the bend radius of the U shape
+handle_radius = 15;
+//assembly visualise only, rotate the handle by this much degrees
+handle_rotation = 180; //[0:180]
+
+
+/* [Visualiaston] */
+//visualisation of innards
+chopmodel = false; //[true, false];
+chopmodel_showblock = false; //[true, false];
+chopx = -0; //[-400:400]
+chopy = -0; //[-400:400]
+chopz = -1; //[-400:400]
+chop_width = 150; //[0:400]
+chop_height = 200; //[0:400]
+chop_depth = 200; //[0:400]
+
+// The below was not the smartest move I could have made. But I did it anyway.
 
 //the corners are rotate extruded, so are also the sides
 shBaseCorner = [
@@ -218,70 +318,7 @@ shTopHinge = [
 ];
 
 
-///////////////////come back to here
-//lets do a massive cludge :)
-cLatchBetweenHoles = 20.0;  //0.1
-cLatchWidth = 19.5; //0.1
-cLatchCircle = 6.0; //0.1
-//too thick and it won't flex
-cLatchThickness = 3; //0.1
-latch_screw_len = 25; //0.1
-latch_screw_dia = 3.2; //0.1
-latch_screw_head_dia = 6; //0.1
-latch_screw_head_len = 4; //0.1
-//fudged for visualisation only
-latch_right_screw_offset = 40;
-latch_left_screw_offset = corner_distance.y - latch_right_screw_offset;
-handle_preview_y = (latch_left_screw_offset + latch_right_screw_offset) / 2;
-latch_preview_outset = cLatchBetweenHoles;
-//latch hole size (max 3.5)
-latch_hole = 3.2;  //0.1
-latch_screw_clip_clearance = 0.1;
-latch_thickness_offset = 1.6;
-latch_segment_angle = 240;
-latch_segment_rotation = 55;
 
-
-side_support_rib_thickness = 5; //0.1
-
-// --------------------------
-// Side reinforcement customizer
-// --------------------------
-//reinforcement count
-side_reinforce_count = 3; // [1:1:8]
-//offset from edge
-side_reinforce_first_offset = 10; // [4:1:60]
-// 0 = auto spread between edge offsets
-side_reinforce_spacing = 0; 
-
-//visualisation of innards
-chopmodel = false; //[true, false];
-chopx = -0;
-chopy = -0;
-chopz = -1;
-chop_width = 150;
-chop_height = 200;
-chop_depth = 200;
-
-
-//hole size in the handle for mounting
-handle_hole_dia = 3.2; //0.1
-//how thick the handle is, as in, how deep if laid down flat
-handle_thickness = 6; //0.1
-//the width of the handle is the thickness of the extrusion, not the width of the handle overall
-handle_width = 8; //0.1
-//how tall it is, as in the top to bottom of the U shape
-handle_height = 40; //0.1
-//how wide the handle is overall, as in the outer sides of the U shape. this should be set to match the outside edges of the inner latch ribs
-handle_length = 80; //0.1
-//add this much to the outside edges of the screw holes on the handle, so the handle doesn't interfere with other parts.
-handle_screw_mount_offset_length = 7.0; //0.1
-//rounding of the edges of the handle
-handle_edge_radius = 1; //0.1
-//the bend radius of the U shape
-handle_radius = 15;
-//assembly visualise only, rotate the handle by this much degrees
-handle_rotation = 180; //[0:180]
 /*
 Create a rounded square (or rect)
 */
@@ -497,6 +534,21 @@ function reinforce_x(i) =
         ? (corner_distance.x / 2)
         : (side_reinforce_first_offset + i * ((side_reinforce_spacing > 0) ? side_reinforce_spacing : reinforce_spacing_auto()));
 
+function hinge_rib_hole_dia(which, inner) =
+    which == 0 ? 
+        inner ? hinge_inner_rib_hole_dia : hinge_outer_rib_hole_dia : 
+        hinge_outer_rib_hole_dia;
+
+function latch_rib_hole_dia(which, inner) =
+    which == 0 ? 
+        inner ? 
+            latch_inner_rib_base_hole_dia :
+            latch_outer_rib_base_hole_dia 
+        : 
+        inner ? 
+            latch_inner_rib_top_hole_dia :
+            latch_outer_rib_top_hole_dia;
+
 
 module reinforce_pair_at(xpos, which = 0) {
     half_t = side_support_rib_thickness / 2;
@@ -586,7 +638,7 @@ module base_sides(which = 0) {
     }
 }
 
-module base_hinge_profile(which = 0) {
+module base_hinge_profile(which = 0, inner = false) {
     //creates rear support, then adds the hinge part minus the centre hole, finally differences out the hole. IFs probably unnecessary here as in base_hinge
     module bmain(which = 0) {
         //if ((run == 0) || (run == 2) || (run == 3) || (run == 5)) {
@@ -609,7 +661,7 @@ module base_hinge_profile(which = 0) {
         difference() {
         bmain(which);
         translate([(wt * 4)+5, which ? th : bh, 0])
-            circle(d=hinge_hole, $fn=100);
+            circle(d=hinge_rib_hole_dia(which, inner), $fn=100);
         }
     //}
 }
@@ -625,7 +677,7 @@ module base_hinge(which = 0, addscrews = false) {
         translate([corner_distance.x,corner_distance.y-hinge_thickness * 5,0])
             rotate([90,0,0])
                 linear_extrude(height = hinge_thickness)
-                    base_hinge_profile(which);
+                    base_hinge_profile(which, inner = true);
         translate([corner_distance.x, hinge_thickness,0])
             rotate([90,0,0])
                 linear_extrude(height = hinge_thickness)
@@ -633,7 +685,7 @@ module base_hinge(which = 0, addscrews = false) {
         translate([corner_distance.x, hinge_thickness * 6, 0])
             rotate([90,0,0])
                 linear_extrude(height = hinge_thickness)
-                    base_hinge_profile(which);
+                    base_hinge_profile(which, inner = true);
     } else if (which == 1) {
 //////// hinges top
         translate([corner_distance.x,corner_distance.y - hinge_thickness - hinge_clearance, 0])
@@ -659,13 +711,14 @@ module screw(
     head_cs = false  //whether the screw head is countersunk
 
 */
-    if (addscrews) {
+    if (addscrews) { //hinge screws
         translate([
             corner_distance.x + 17.5, 
-            left_screw_offset, //hinge_screw_head_len + hinge_screw_len + (hinge_thickness * 4), 
+            left_screw_offset+hinge_screw_len, 
             top_height
         ]) {
             rotate([90,0,0]) {
+                translate([0, 0, hinge_screw_len])
                 screw(
                     thread_dia = hinge_screw_dia,
                     thread_len = hinge_screw_len,
@@ -678,10 +731,11 @@ module screw(
         }
         translate([
             corner_distance.x + 17.5, 
-            right_screw_offset, //corner_distance.y,//-(hinge_thickness * 3) - 10 - hinge_screw_head_len-hinge_screw_len, 
+            right_screw_offset-hinge_screw_len, //corner_distance.y,//-(hinge_thickness * 3) - 10 - hinge_screw_head_len-hinge_screw_len, 
             top_height
         ]) {
             rotate([90,0,180]) {
+                translate([0, 0, hinge_screw_len])
                 screw(
                     thread_dia = hinge_screw_dia,
                     thread_len = hinge_screw_len,
@@ -695,15 +749,16 @@ module screw(
         //latch screws
         translate([
             -15, 
-            latch_left_screw_offset, //hinge_screw_head_len + hinge_screw_len + (hinge_thickness * 4), 
+            latch_left_screw_offset+latch_screw_len,
             top_height - 10
         ]) {
             rotate([90,0,0]) {
+                translate([0, 0, latch_screw_len])
                 screw(
-                    thread_dia = hinge_screw_dia,
-                    thread_len = hinge_screw_len,
-                    head_dia = hinge_screw_head_dia,
-                    head_len = hinge_screw_head_len,
+                    thread_dia = latch_screw_dia,
+                    thread_len = latch_screw_len,
+                    head_dia = latch_screw_head_dia,
+                    head_len = latch_screw_head_len,
                     head_cs = false,
                     translate_head = true
                 );
@@ -711,15 +766,16 @@ module screw(
         }
         translate([
             -15, 
-            latch_right_screw_offset, //corner_distance.y,//-(hinge_thickness * 3) - 10 - hinge_screw_head_len-hinge_screw_len, 
+            latch_right_screw_offset-latch_screw_len, //corner_distance.y,//-(hinge_thickness * 3) - 10 - hinge_screw_head_len-hinge_screw_len, 
             top_height - 10
         ]) {
             rotate([90,0,180]) {
+                translate([0, 0, latch_screw_len])
                 screw(
-                    thread_dia = hinge_screw_dia,
-                    thread_len = hinge_screw_len,
-                    head_dia = hinge_screw_head_dia,
-                    head_len = hinge_screw_head_len,
+                    thread_dia = latch_screw_dia,
+                    thread_len = latch_screw_len,
+                    head_dia = latch_screw_head_dia,
+                    head_len = latch_screw_head_len,
                     head_cs = false,
                     translate_head = true
                 );
@@ -727,15 +783,16 @@ module screw(
         }
         translate([
             -15, 
-            latch_left_screw_offset, //hinge_screw_head_len + hinge_screw_len + (hinge_thickness * 4), 
+            latch_left_screw_offset+latch_screw_len, //hinge_screw_head_len + hinge_screw_len + (hinge_thickness * 4), 
             top_height + 10
         ]) {
             rotate([90,0,0]) {
+                translate([0, 0, latch_screw_len])
                 screw(
-                    thread_dia = hinge_screw_dia,
-                    thread_len = hinge_screw_len,
-                    head_dia = hinge_screw_head_dia,
-                    head_len = hinge_screw_head_len,
+                    thread_dia = latch_screw_dia,
+                    thread_len = latch_screw_len,
+                    head_dia = latch_screw_head_dia,
+                    head_len = latch_screw_head_len,
                     head_cs = false,
                     translate_head = true
                 );
@@ -743,15 +800,16 @@ module screw(
         }
         translate([
             -15, 
-            latch_right_screw_offset, //corner_distance.y,//-(hinge_thickness * 3) - 10 - hinge_screw_head_len-hinge_screw_len, 
+            latch_right_screw_offset-latch_screw_len, //corner_distance.y,//-(hinge_thickness * 3) - 10 - hinge_screw_head_len-hinge_screw_len, 
             top_height + 10
         ]) {
             rotate([90,0,180]) {
+                translate([0, 0, latch_screw_len])
                 screw(
-                    thread_dia = hinge_screw_dia,
-                    thread_len = hinge_screw_len,
-                    head_dia = hinge_screw_head_dia,
-                    head_len = hinge_screw_head_len,
+                    thread_dia = latch_screw_dia,
+                    thread_len = latch_screw_len,
+                    head_dia = latch_screw_head_dia,
+                    head_len = latch_screw_head_len,
                     head_cs = false,
                     translate_head = true
                 );
@@ -797,7 +855,7 @@ module base_plate() {
         cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
 }
 
-module base_latches_profile(which = 0) {
+module base_latches_profile(which = 0, inner = false) {
 
     //module blatch() {
     //    polygon(shBaseLatches);
@@ -807,14 +865,14 @@ module base_latches_profile(which = 0) {
                 difference() {
                     polygon(shBaseLatches);
                     translate([(wt * 4)+2, bh-10, 0]) {
-                        circle(d=latch_hole, $fn=100);
+                        circle(d=latch_rib_hole_dia(which, inner), $fn=100);
                     }
                 }
             } else {
                 difference() {
                     polygon(shTopLatches);
                     translate([(wt * 4)+2, th-10, 0]) {
-                        circle(d=latch_hole, $fn=100);
+                        circle(d=latch_rib_hole_dia(which, inner), $fn=100);
                     }
             }
             }
@@ -826,46 +884,49 @@ module base_latches(which = 0) {
         translate([0, 5, 0])
             rotate([90,0,180])
                 linear_extrude(height = 5)
-                    base_latches_profile(which);
+                    base_latches_profile(which, inner = false);
         translate([0, corner_distance.y-10, 0])
             rotate([90,0,180])
                 linear_extrude(height = 5)
-                    base_latches_profile(which);
+                    base_latches_profile(which, inner = false);
         translate([0, corner_distance.y-35, 0])
             rotate([90,0,180])
                 linear_extrude(height = 5)
-                    base_latches_profile(which);
+                    base_latches_profile(which, inner = true); //top inner
         translate([0, 30, 0])
             rotate([90,0,180])
                 linear_extrude(height = 5)
-                    base_latches_profile(which);
+                    base_latches_profile(which, inner = true); //base inner
 }
 
-module finger_latch() {
+module finger_latch(
+    hole_dia_a = latch_outer_rib_base_hole_dia,
+    hole_dia_b = latch_outer_rib_top_hole_dia
+) {
     union() {
         tube(
-            od_base = cLatchCircle-0.5,
-            od_top = cLatchCircle-0.5,
-            id_base = latch_screw_dia+latch_screw_clip_clearance,
-            id_top = latch_screw_dia+latch_screw_clip_clearance,
-            length = cLatchWidth - hinge_clearance,
+            od_base = latch_circle_thickness-0.5,
+            od_top = latch_circle_thickness-0.5,
+            id_base = hole_dia_a+latch_screw_clip_clearance,
+            id_top = hole_dia_a+latch_screw_clip_clearance,
+            length = latch_width - hinge_clearance,
             segment_angle = latch_segment_angle,
             rotation = latch_segment_rotation
         );
-        translate([0, cLatchBetweenHoles, 0]) {
+        translate([0, latch_dist_between_holes, 0]) {
             tube(
-                od_base = cLatchCircle,
-                od_top = cLatchCircle,
-                id_base = latch_screw_dia+latch_screw_clip_clearance,
-                id_top = latch_screw_dia+latch_screw_clip_clearance,
-                length = cLatchWidth - hinge_clearance,
+                od_base = latch_circle_thickness,
+                od_top = latch_circle_thickness,
+                id_base = hole_dia_b+latch_screw_clip_clearance,
+                id_top = hole_dia_b+latch_screw_clip_clearance,
+                length = latch_width - hinge_clearance,
                 segment_angle = 0,
                 rotation = 0
             );
         }
-        translate([-latch_thickness_offset, -9, -9.65]) {
+        translate([-latch_thickness_offset, -latch_flat_offset, -9.65]) {
             rotate([0, 270, 0])
-                cube([cLatchWidth- hinge_clearance, 10+cLatchWidth- hinge_clearance, cLatchThickness]);
+                cube([latch_width- hinge_clearance, latch_flat_length_extra+latch_width- hinge_clearance, latch_thickness]);
         }
     }
 }
@@ -965,7 +1026,10 @@ render() {
             } //assembly
 
             if (run == "latches") {
-                finger_latch();
+                finger_latch(
+                    hole_dia_a = latch_outer_rib_base_hole_dia,
+                    hole_dia_b = latch_outer_rib_top_hole_dia
+                );
             }
 
             if (run == "handle") {
@@ -984,7 +1048,8 @@ render() {
             if (run == "seal") {
                 generate_seal();
             }
-            if (run == "screw") {
+            if (run == "hinge_screw") {
+                translate([0, 0, hinge_screw_len])
                 screw(
                     thread_dia = hinge_screw_dia,
                     thread_len = hinge_screw_len,
@@ -994,11 +1059,27 @@ render() {
                     translate_head = true
                 );
             }
+            if (run == "latch_screw") {
+                translate([0, 0, latch_screw_len])
+                screw(
+                    thread_dia = latch_screw_dia,
+                    thread_len = latch_screw_len,
+                    head_dia = latch_screw_head_dia,
+                    head_len = latch_screw_head_len,
+                    head_cs = false,
+                    translate_head = true
+                );
+            }            
         } //union, for separating for differencing
 
         if (chopmodel == true) {
             translate([chopx, chopy, chopz])
-                cube([chop_width, chop_height, chop_depth], center = false);
+                if (chopmodel_showblock) {
+                    //color("")
+                    %cube([chop_width, chop_height, chop_depth], center = false);
+                } else {
+                    cube([chop_width, chop_height, chop_depth], center = false);
+                }
         }
 
     }
