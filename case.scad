@@ -22,13 +22,13 @@ It can help you with syntax errors, some functions and stuff, but not create a m
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/20r180";
+version = "v0.1-2026/06/20r192";
 **/
 
 use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
 $fn = 32;
 //Choose part / Assembly view
-run = "assembly"; //[assembly, base, top, latches, handle, seal]
+run = "assembly"; //[assembly, base, top, latches, handle, seal, screw]
 //x,y size. This is actually to to begining of each corner radius. Design choices my dude... Render and measure edge to edge.
 corner_distance = [165, 165]; 
 //muliples of nozzle size
@@ -39,13 +39,13 @@ base_thickness = 4;  //0.1
 base_height = 40; //0.1
 top_height = 20; //0.1
 //hinge hole size
-hinge_hole = 1.8; //0.1
+hinge_hole = 3.2; //0.1
 //thickness for outer hinge and 2x is inner hinge
 hinge_thickness = 4.0; //0.1
 hinge_clearance = 0.2; //0.1
 hinge_screw_len = 35; //0.1
-hinge_screw_dia = 1.75; //0.1
-hinge_screw_head_dia = 6; //0.1
+hinge_screw_dia = 3.0; //0.1
+hinge_screw_head_dia = 7; //0.1
 hinge_screw_head_len = 4; //0.1
 //fudged for visualisation only
 right_screw_offset = 35;
@@ -226,7 +226,7 @@ cLatchCircle = 6.0; //0.1
 //too thick and it won't flex
 cLatchThickness = 3; //0.1
 latch_screw_len = 25; //0.1
-latch_screw_dia = 3; //0.1
+latch_screw_dia = 3.2; //0.1
 latch_screw_head_dia = 6; //0.1
 latch_screw_head_len = 4; //0.1
 //fudged for visualisation only
@@ -237,7 +237,9 @@ latch_preview_outset = cLatchBetweenHoles;
 //latch hole size (max 3.5)
 latch_hole = 3.2;  //0.1
 latch_screw_clip_clearance = 0.1;
-latch_thickness = 1.6;
+latch_thickness_offset = 1.6;
+latch_segment_angle = 240;
+latch_segment_rotation = 55;
 
 
 side_support_rib_thickness = 5; //0.1
@@ -847,8 +849,8 @@ module finger_latch() {
             id_base = latch_screw_dia+latch_screw_clip_clearance,
             id_top = latch_screw_dia+latch_screw_clip_clearance,
             length = cLatchWidth - hinge_clearance,
-            segment_angle = 240,
-            rotation = 55
+            segment_angle = latch_segment_angle,
+            rotation = latch_segment_rotation
         );
         translate([0, cLatchBetweenHoles, 0]) {
             tube(
@@ -861,9 +863,9 @@ module finger_latch() {
                 rotation = 0
             );
         }
-        translate([-latch_thickness, -9, -9.65]) {
+        translate([-latch_thickness_offset, -9, -9.65]) {
             rotate([0, 270, 0])
-                cube([cLatchWidth- hinge_clearance, 10+cLatchWidth- hinge_clearance, latch_thickness]);
+                cube([cLatchWidth- hinge_clearance, 10+cLatchWidth- hinge_clearance, cLatchThickness]);
         }
     }
 }
@@ -967,11 +969,30 @@ render() {
             }
 
             if (run == "handle") {
-
+                handle(
+                    handle_hole_dia = handle_hole_dia,
+                    handle_thickness = handle_thickness,
+                    handle_width = handle_width,
+                    handle_height = handle_height,
+                    handle_length = handle_length,
+                    handle_edge_radius = handle_edge_radius,
+                    handle_radius = handle_radius,
+                    handle_screw_mount_offset_length = handle_screw_mount_offset_length
+                ); 
             }
 
             if (run == "seal") {
                 generate_seal();
+            }
+            if (run == "screw") {
+                screw(
+                    thread_dia = hinge_screw_dia,
+                    thread_len = hinge_screw_len,
+                    head_dia = hinge_screw_head_dia,
+                    head_len = hinge_screw_head_len,
+                    head_cs = false,
+                    translate_head = true
+                );
             }
         } //union, for separating for differencing
 
