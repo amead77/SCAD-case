@@ -17,12 +17,14 @@ Literally no one else approached their versions like I have. Probably because th
 I tried getting copilot to create my latches and fix some issues. That branch got abandoned immediately
 as AI can't see what it is making and successfully produced trash. 
 It can help you with syntax errors, some functions and stuff, but not create a model or part of.
+
+as of 2026-06-20 the case is complete as is, but needs some hard-coded bits changing at a later date
 */
 
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/20r292";
+version = "v0.1-2026/06/20r319";
 **/
 
 use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -163,13 +165,14 @@ handle_screw_mount_offset_length = 7.0; //0.1
 //rounding of the edges of the handle
 handle_edge_radius = 1; //0.1
 //the bend radius of the U shape
-handle_radius = 15;
+handle_radius = 5;
 //assembly visualise only, rotate the handle by this much degrees
 handle_rotation = 180; //[0:180]
 
 
 /* [Visualiaston] */
 //visualisation of innards
+lift_the_lid = 0; //[0:100]
 chopmodel = false; //[true, false];
 chopmodel_showblock = false; //[true, false];
 chopx = -0; //[-400:400]
@@ -666,7 +669,8 @@ module base_hinge_profile(which = 0, inner = false) {
     //}
 }
 
-//builds the hinges, then case side supports
+//builds the hinges, add screws
+//this module does too much. must split later
 module base_hinge(which = 0, addscrews = false) {
     //hinges base
     if (which == 0) {
@@ -698,19 +702,8 @@ module base_hinge(which = 0, addscrews = false) {
                 linear_extrude(height = hinge_thickness * 4 - (hinge_clearance * 2))
                     base_hinge_profile(which);
     }
-/*
-    simple screw module for differencing/subtracting from models
-    this isn't intended to create a thread, just a suitable 
-    screw hole in whatever is being designed.
 
-module screw(
-    thread_dia = 3,  //the diameter of the screw thread
-    thread_len = 30, //the length of the screw thread
-    head_dia = 6,    //the diameter of the screw head
-    head_len = 2,    //the length of the screw head
-    head_cs = false  //whether the screw head is countersunk
-
-*/
+//I should not have put the screw visualisation in here.
     if (addscrews) { //hinge screws
         translate([
             corner_distance.x + 17.5, 
@@ -784,7 +777,7 @@ module screw(
         translate([
             -15, 
             latch_left_screw_offset+latch_screw_len, //hinge_screw_head_len + hinge_screw_len + (hinge_thickness * 4), 
-            top_height + 10
+            base_height - 10 //top_height + 10
         ]) {
             rotate([90,0,0]) {
                 translate([0, 0, latch_screw_len])
@@ -815,31 +808,7 @@ module screw(
                 );
             }
         }
-
     }
-////////
-
-
-        //side supports
-/*
-        translate([10, corner_distance.y, 0])
-            rotate([90,0,90])
-                linear_extrude(height = 5)
-                    polygon(shBaseSupport);
-        translate([corner_distance.x-10, corner_distance.y, 0])
-            rotate([90,0,90])
-                linear_extrude(height = 5)
-                    polygon(shBaseSupport);
-        translate([10, 0, 0])
-            rotate([90,0,270])
-                linear_extrude(height = 5)
-                    polygon(shBaseSupport);
-        translate([corner_distance.x-10, 0, 0])
-            rotate([90,0,270])
-                linear_extrude(height = 5)
-                    polygon(shBaseSupport);
-*/    
-
 }
 
 module side_supports(which) {
@@ -982,7 +951,7 @@ render() {
                     side_supports(which = 0);
                 }
 
-                translate([0, corner_distance.y, (top_height + base_height) + 0]) {
+                translate([0, corner_distance.y, (top_height + base_height) + lift_the_lid]) {
                     rotate([180, 0, 0]) {
                         union() {
                             base_corners(which = 1);
@@ -994,31 +963,37 @@ render() {
                         }
                     }
                 }
-                translate([0, 0, 0.0]) {
-                    generate_seal();
-                }
-                translate([-15, latch_left_screw_offset + latch_preview_outset, base_height-10]) {
-                    rotate([90, 0, 0]) {
-                        finger_latch();
+                color("white") {
+                    translate([0, 0, 0.0]) {
+                        generate_seal();
                     }
                 }
-                translate([-15, latch_right_screw_offset - latch_preview_outset, base_height-10]) {
-                    rotate([90, 0, 0]) {
-                        finger_latch();
+                color("lightblue") {
+                    translate([-15, latch_left_screw_offset + latch_preview_outset, base_height-10]) {
+                        rotate([90, 0, 0]) {
+                            finger_latch();
+                        }
+                    }
+                    translate([-15, latch_right_screw_offset - latch_preview_outset, base_height-10]) {
+                        rotate([90, 0, 0]) {
+                            finger_latch();
+                        }
                     }
                 }
-                translate([-15, handle_preview_y, base_height-10]) {
-                    rotate([-handle_rotation, 0, 90]) {
-                        handle(
-                            handle_hole_dia = handle_hole_dia,
-                            handle_thickness = handle_thickness,
-                            handle_width = handle_width,
-                            handle_height = handle_height,
-                            handle_length = handle_length,
-                            handle_edge_radius = handle_edge_radius,
-                            handle_radius = handle_radius,
-                            handle_screw_mount_offset_length = handle_screw_mount_offset_length
-                        ); 
+                color("lightgreen") {
+                    translate([-15, handle_preview_y, base_height-10]) {
+                        rotate([-handle_rotation, 0, 90]) {
+                            handle(
+                                handle_hole_dia = handle_hole_dia,
+                                handle_thickness = handle_thickness,
+                                handle_width = handle_width,
+                                handle_height = handle_height,
+                                handle_length = handle_length,
+                                handle_edge_radius = handle_edge_radius,
+                                handle_radius = handle_radius,
+                                handle_screw_mount_offset_length = handle_screw_mount_offset_length
+                            ); 
+                        }
                     }
                 }
 
