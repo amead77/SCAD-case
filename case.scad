@@ -24,7 +24,7 @@ as of 2026-06-20 the case is complete as is, but needs some hard-coded bits chan
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/21r139";
+version = "v0.1-2026/06/21r216";
 **/
 
 //use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -196,20 +196,40 @@ maxx = corner_distance.x;
 maxy = corner_distance.y;
 echo (maxx);
 echo (maxy);
+//FIRST LINE
 cust_text1 = "hello world";
+cust_text1_show = true; //[true, false]
 //positioning
-cust_text1_x = 50; 
-cust_text1_x_centre = false; //[true, false]
-cust_text1_y = 100;
-cust_text1_y_centre = false; //[true, false]
-cust_text1_thickness = 0.05; //0.01
-cust_text1_mode = "engrave"; //[emboss, engrave]
+cust_text1_x = 20; 
+cust_text1_x_centre = true; //[true, false]
+cust_text1_y = 50;
+cust_text1_y_centre = true; //[true, false]
+cust_text1_thickness = 2.00; //0.01
+cust_text1_mode = "emboss"; //[emboss, engrave]
 cust_text1_font         = "Liberation Mono:style=Bold";
 //in MM
 cust_text1_size         = 25;
 //probably only for visulisation
 cust_text1_colour = "darkblue";
 cust_text1_rotation = 270;
+//SECOND LINE
+cust_text2 = "Line 2 Yo";
+cust_text2_show = true; //[true, false]
+//positioning
+cust_text2_x = 50; 
+cust_text2_x_centre = false; //[true, false]
+cust_text2_y = 100;
+cust_text2_y_centre = false; //[true, false]
+cust_text2_thickness = 2.00; //0.01
+cust_text2_mode = "emboss"; //[emboss, engrave]
+cust_text2_font         = "Liberation Mono:style=Bold";
+//in MM
+cust_text2_size         = 25;
+//probably only for visulisation
+cust_text2_colour = "darkblue";
+cust_text2_rotation = 270;
+
+
 /* [Visualiaston] */
 //visualisation of innards
 chopmodel = false; //[true, false];
@@ -1003,23 +1023,36 @@ module side_supports(which) {
 
 
 module base_plate(which = true) {
-    module gen_text() {
-        rotate([0, 0, cust_text1_rotation]) {
-            linear_extrude(height = cust_text1_thickness) {
-                mirror([1, 0, 0]) {
-                    color(cust_text1_colour) {
-                        text(
-                            cust_text1,
-                            size = cust_text1_size * (25.4/72),
-                            font = cust_text1_font,
-                            halign = "center",
-                            valign = "center"
-                        );
+
+    module gen_text(
+        posx = 0, 
+        posy = 0,
+        posz = 0,
+        rotation = 0,
+        ttext = "",
+        tsize = 10,
+        tthickness = 1.0,
+        tfont = "Liberation Mono:style=Bold",
+        halign = "center",
+        valign = "center"
+    ) {
+        if (ttext != "") {
+            translate([posx, posy, posz-0.001]) {
+                rotate([0, 0, rotation]) {
+                    linear_extrude(height = tthickness) {
+                        mirror([1, 0, 0]) {
+                            text(
+                                ttext,
+                                size = tsize * (25.4/72),
+                                font = tfont,
+                                halign = "center",
+                                valign = "center"
+                            );
+                        }
                     }
                 }
             }
         }
-
 
     }
 
@@ -1027,33 +1060,30 @@ module base_plate(which = true) {
         if (which) { //if base, just create the base
             cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
         } else { //top
-            if (cust_text1 != "") {
-                if (cust_text1_mode == "engrave") {
-                    posx = cust_text1_x_centre ? maxx / 2 : cust_text1_x;
-                    posy = cust_text1_y_centre ? maxy / 2 : cust_text1_y;
-                    difference() {
-                        cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
-                        // Use a tiny overlap so CSG subtraction reliably intersects the panel volume.
-                        translate([posx, posy, -0.001]) {
-                            gen_text();
-                        }
+            posx1 = cust_text1_x_centre ? maxx / 2 : cust_text1_x;
+            posy1 = cust_text1_y_centre ? maxy / 2 : cust_text1_y;
+            posz1 = cust_text1_mode == "emboss" ? -cust_text1_thickness : 0;
+            posx2 = cust_text2_x_centre ? maxx / 2 : cust_text2_x;
+            posy2 = cust_text2_y_centre ? maxy / 2 : cust_text2_y;
+            posz2 = cust_text2_mode == "emboss" ? -cust_text2_thickness : 0;
+
+            difference() {
+                union() {
+                    cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
+                    if ((cust_text1_show) && (cust_text1_mode == "emboss")) {
+                        gen_text(posx = posx1, posy = posy1, posz = posz1, rotation = cust_text1_rotation, ttext = cust_text1, tsize = cust_text1_size, tfont = cust_text1_font, tthickness = cust_text1_thickness);
                     }
-                } else {
-                    // Emboss out from the front face (y = -depth to 0).
-                    posx = cust_text1_x_centre ? maxx / 2 : cust_text1_x;
-                    posy = cust_text1_y_centre ? maxy / 2 : cust_text1_y;
-                    union() {
-                        cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
-                        // Use a tiny overlap so CSG subtraction reliably intersects the panel volume.
-                        translate([posx, posy, -cust_text1_thickness]) {
-                            gen_text();
-                        }
+                    if ((cust_text2_show) && (cust_text2_mode == "emboss")) {
+                        gen_text(posx = posx2, posy = posy2, posz = posz2, rotation = cust_text2_rotation, ttext = cust_text2, tsize = cust_text2_size, tfont = cust_text2_font, tthickness = cust_text2_thickness);
                     }
                 }
+                if ((cust_text1_show) && (cust_text1_mode == "engrave")) {
+                    gen_text(posx = posx1, posy = posy1, posz = posz1, rotation = cust_text1_rotation, ttext = cust_text1, tsize = cust_text1_size, tfont = cust_text1_font, tthickness = cust_text1_thickness);
+                }
+                if ((cust_text2_show) && (cust_text2_mode == "engrave")) {
+                    gen_text(posx = posx2, posy = posy2, posz = posz2, rotation = cust_text2_rotation, ttext = cust_text2, tsize = cust_text2_size, tfont = cust_text2_font, tthickness = cust_text2_thickness);
+                }
 
-
-            } else { //cust_text1 != ""
-                cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
             }
         }
     }
