@@ -54,6 +54,8 @@ At some point I need to look into the remaining hard coded parts, also look at s
 
 ![Seal part](images/seal.png)
 
+Weirdly, the text/images doesn't show in assembly view. Only in the top part view. Remember to spin the lid over in openscad so you can see it.
+
 ![text](images/text_imports.png)
 
 ![feet](images/feet.png)
