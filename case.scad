@@ -24,7 +24,7 @@ as of 2026-06-20 the case is complete as is, but needs some hard-coded bits chan
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/21r133";
+version = "v0.1-2026/06/21r139";
 **/
 
 //use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -1040,6 +1040,15 @@ module base_plate(which = true) {
                     }
                 } else {
                     // Emboss out from the front face (y = -depth to 0).
+                    posx = cust_text1_x_centre ? maxx / 2 : cust_text1_x;
+                    posy = cust_text1_y_centre ? maxy / 2 : cust_text1_y;
+                    union() {
+                        cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
+                        // Use a tiny overlap so CSG subtraction reliably intersects the panel volume.
+                        translate([posx, posy, -cust_text1_thickness]) {
+                            gen_text();
+                        }
+                    }
                 }
 
 
