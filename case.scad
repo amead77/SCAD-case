@@ -1,4 +1,17 @@
 /*
+*****[ TO DO ]*****
+
+-fix import & text missing in assembly view. works fine in 'top' but otherwise is missing.
+-case inserts. design a rounded and chamfered cube that fits in the case.
+-unfrack some of the remaining hard coded parts.
+-switch from 2d array of points in space to using 3d primitives. (will never happen)
+
+
+
+*/
+
+
+/*
 2024
 so... when I first created this (about 2 years prior) I had not long started with openscad and I stopped
 creating this because I just ran out of steam before creating the latches.
@@ -24,7 +37,7 @@ as of 2026-06-20 the case is complete as is, but needs some hard-coded bits chan
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/21r272";
+version = "v0.1-2026/06/21r293";
 **/
 
 //use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -32,7 +45,7 @@ $fn = 32;
 
 //Choose part / Assembly view
 /* [Part Chooser] */
-run = "top"; //[assembly, base, top, latches, handle, seal, hinge_screw, latch_screw]
+run = "assembly"; //[assembly, base, top, latches, handle, seal, hinge_screw, latch_screw]
 //In Assembly view, show these parts
 show_base = true; //[true, false]
 show_top = true; //[true, false]
@@ -197,11 +210,11 @@ maxy = corner_distance.y;
 echo (maxx);
 echo (maxy);
 //FIRST LINE
-cust_text1 = "hello world";
+cust_text1 = "line 1";
 cust_text1_show = true; //[true, false]
 //positioning
-cust_text1_x = 20; 
-cust_text1_x_centre = true; //[true, false]
+cust_text1_x = 140; 
+cust_text1_x_centre = false; //[true, false]
 cust_text1_y = 50;
 cust_text1_y_centre = true; //[true, false]
 cust_text1_thickness = 2.00; //0.01
@@ -213,13 +226,13 @@ cust_text1_size         = 25;
 cust_text1_colour = "darkblue";
 cust_text1_rotation = 270;
 //SECOND LINE
-cust_text2 = "Line 2 Yo";
+cust_text2 = "line 2";
 cust_text2_show = true; //[true, false]
 //positioning
-cust_text2_x = 50; 
+cust_text2_x = 20; 
 cust_text2_x_centre = false; //[true, false]
 cust_text2_y = 100;
-cust_text2_y_centre = false; //[true, false]
+cust_text2_y_centre = true; //[true, false]
 cust_text2_thickness = 2.00; //0.01
 cust_text2_mode = "emboss"; //[emboss, engrave]
 cust_text2_font         = "Liberation Mono:style=Bold";
@@ -231,16 +244,19 @@ cust_text2_rotation = 270;
 
 /* [Import image/STL] */
 import_show             = true; //[true, false]
-import_file             = "imports/Biohazard_symbol.svg";
-import_type             = "svg"; //[svg, 3mf, stl]
+import_file             = "imports/biohazard.svg";
+//import type, stl / 3mf untested as yet
+import_type             = "svg"; //[svg, 3mf/stl]
 import_width            = 40;
 import_height           = 40;
 import_depth            = 1.0; //0.01
 import_offset_x         = 50;
-import_offset_y         = 0;
+import_centre_x           = true; //[true, false]
+import_offset_y         = 100;
+import_centre_y           = true; //[true, false]
 import_offset_z         = 0;
 import_mode             = "engrave"; //[emboss, engrave]
-import_rotation         = 0;
+import_rotation         = 37;
 
 
 /* [Visualiaston] */
@@ -1071,8 +1087,8 @@ module import_file() {
     target_height = (import_height > 0) ? import_height : maxy * 0.5;
     target_depth  = (import_depth  > 0) ? import_depth  : 0.8;
 
-    x_pos = import_offset_x;
-    y_pos = import_offset_y;
+    x_pos = import_centre_x ? maxx / 2 : import_offset_x;
+    y_pos = import_centre_y ? maxy / 2 : import_offset_y;
     z_pos = import_offset_z;
     if (import_type == "svg") {
         if (import_mode == "engrave") {
@@ -1103,6 +1119,19 @@ module import_file() {
                 }
 
         }
+
+    } else { //3mf or stl
+            // STL/3MF: assumes mesh uses X=width, Z=height, Y=depth.
+            y_pos = (import_mode == "engrave") ? (target_depth / 2) : -(target_depth / 2);
+            translate([x_pos, y_pos, z_pos]) {
+                resize([target_width, target_depth, target_height], auto = false) {
+                    mirror([1, 0, 0]) {
+                        import(file = import_file, center = true);
+                    }
+                }
+            }
+
+
     }
 }
 
