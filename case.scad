@@ -24,7 +24,7 @@ as of 2026-06-20 the case is complete as is, but needs some hard-coded bits chan
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/21r79";
+version = "v0.1-2026/06/21r89";
 **/
 
 //use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -185,7 +185,7 @@ handle_radius = 5;
 handle_rotation = 180; //[0:180]
 
 /* [Feet on hinges] */
-incl_foot = true; //[true, false]
+incl_foot = false; //[true, false]
 base_hinge_foot_thickness = 0;
 base_hinge_foot_len = 21;
 top_hinge_foot_thickness = 0;
@@ -324,40 +324,40 @@ shTopLatches = [
 ];
 
 //shBaseHinge is the main part of the hinge, minus the actual hingey round bits :|
-shBaseHinge = [
-    [(wt * 4), bh], 
-    [((wt * 4)+10), bh], 
-    [((wt * 4)+10), (bh-2)], 
-    [(wt * 3), (wt * 2)], 
-    [(wt * 4), bh]
-];
-
-shTopHinge = [
-    [(wt * 4), th], 
-    [((wt * 4)+10), th], 
-    [((wt * 4)+10), (th-2)], 
-    [(wt * 3), (wt * 2)], 
-    [(wt * 4), th]
-];
-
-//the hinge, but with feet attached
 shBaseHingeFoot = [
-    [(wt * 4), bh], 
+    [(wt * 3), bh-(seal_depth * 2)], 
     [((wt * 4)+10+base_hinge_foot_thickness), bh], 
     [((wt * 4)+10+base_hinge_foot_thickness), (bh-base_hinge_foot_len)], 
     [((wt * 4)+10+base_hinge_foot_thickness), (bh-2)-base_hinge_foot_len-10], 
     //[((wt * 3)+10), (bh-2)], 
     [(wt * 3), (wt * 2)], 
-    [(wt * 4), bh]
+    [(wt * 3), bh-(seal_depth * 2)]
 ];
 
 shTopHingeFoot = [
-    [(wt * 4), th], 
+    [(wt * 3), th-(seal_depth * 2+0.5)], 
     [((wt * 4)+10+top_hinge_foot_thickness), th], 
     [((wt * 4)+10+top_hinge_foot_thickness), (th-top_hinge_foot_len)], 
     [((wt * 4)+10+top_hinge_foot_thickness), (th-top_hinge_foot_len)], 
     [(wt * 3), (wt * 2)], 
-    [(wt * 4), th]
+    [(wt * 3), th-(seal_depth * 2+0.5)]
+];
+
+shBaseHinge = [
+    [(wt * 3), bh-seal_depth * 2],
+    [(wt * 4), bh], 
+    [((wt * 4)+10), bh], 
+    [((wt * 4)+10), (bh-2)], 
+    [(wt * 3), (wt * 2)], 
+    [(wt * 3), bh-seal_depth * 2],
+];
+
+shTopHinge = [
+    [(wt * 3), th-(seal_depth * 2+0.5)], 
+    [((wt * 4)+10), th], 
+    [((wt * 4)+10), (th-2)], 
+    [(wt * 3), (wt * 2)], 
+    [(wt * 3), th-(seal_depth * 2+0.5)]
 ];
 
 /*
@@ -700,7 +700,7 @@ function latch_rib_hole_dia(which, inner) =
             latch_outer_rib_top_hole_dia;
 
 
-module reinforce_pair_at(xpos, which = 0) {
+module reinforce_pair_at(xpos, which = true) {
     half_t = side_support_rib_thickness / 2;
 
     // Rear side extrudes in +X, so start half thickness before the target center.
@@ -708,13 +708,13 @@ module reinforce_pair_at(xpos, which = 0) {
         rotate([90,0,90])
             linear_extrude(height = side_support_rib_thickness)
                 //polygon(shBaseSupport);
-                polygon(which ? shTopSupport : shBaseSupport);
+                polygon(which ? shBaseSupport : shTopSupport);
 
     // Front side extrudes in -X, so start half thickness after the target center.
     translate([xpos + half_t, 0, 0])
         rotate([90,0,270])
             linear_extrude(height = side_support_rib_thickness)
-                polygon(which ? shTopSupport : shBaseSupport);
+                polygon(which ? shBaseSupport : shTopSupport);
 }
 
 
@@ -1074,20 +1074,23 @@ render() {
         union() {
             if (run == "base") {
                 union() {
-                    base_corners(which = 0);
-                    base_sides(which = 0);
+                    base_corners(which = true);
+                    base_sides(which = true);
                     base_plate();
-                    base_hinge(which = 0);
-                    base_latches(which = 0);
+                    base_hinge(which = true, incl_foot = incl_foot);
+                    side_supports(which = true);
+                    base_latches(which = true);
                 }
             }
             if (run == "top") {
                 union() {
-                    base_corners(which = 1);
-                    base_sides(which = 1);
+                    base_corners(which = false);
+                    base_sides(which = false);
                     base_plate();
-                    base_hinge(which = 1);
-                    base_latches(which = 1);
+                    base_hinge(which = false, addscrews = true, incl_foot = incl_foot);
+                    base_latches(which = false);
+                    side_supports(which = false);
+
                 }
             }
 /*
