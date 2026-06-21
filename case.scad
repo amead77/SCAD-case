@@ -1,4 +1,17 @@
 /*
+*****[ TO DO ]*****
+
+-fix import & text missing in assembly view. works fine in 'top' but otherwise is missing.
+-case inserts. design a rounded and chamfered cube that fits in the case.
+-unfrack some of the remaining hard coded parts.
+-switch from 2d array of points in space to using 3d primitives. (will never happen)
+
+
+
+*/
+
+
+/*
 2024
 so... when I first created this (about 2 years prior) I had not long started with openscad and I stopped
 creating this because I just ran out of steam before creating the latches.
@@ -24,7 +37,7 @@ as of 2026-06-20 the case is complete as is, but needs some hard-coded bits chan
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/21r89";
+version = "v0.1-2026/06/21r293";
 **/
 
 //use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -190,6 +203,61 @@ base_hinge_foot_thickness = 0;
 base_hinge_foot_len = 21;
 top_hinge_foot_thickness = 0;
 top_hinge_foot_len = 13;
+
+/* [Case top cusomisation] */
+maxx = corner_distance.x;
+maxy = corner_distance.y;
+echo (maxx);
+echo (maxy);
+//FIRST LINE
+cust_text1 = "line 1";
+cust_text1_show = true; //[true, false]
+//positioning
+cust_text1_x = 140; 
+cust_text1_x_centre = false; //[true, false]
+cust_text1_y = 50;
+cust_text1_y_centre = true; //[true, false]
+cust_text1_thickness = 2.00; //0.01
+cust_text1_mode = "emboss"; //[emboss, engrave]
+cust_text1_font         = "Liberation Mono:style=Bold";
+//in MM
+cust_text1_size         = 25;
+//probably only for visulisation
+cust_text1_colour = "darkblue";
+cust_text1_rotation = 270;
+//SECOND LINE
+cust_text2 = "line 2";
+cust_text2_show = true; //[true, false]
+//positioning
+cust_text2_x = 20; 
+cust_text2_x_centre = false; //[true, false]
+cust_text2_y = 100;
+cust_text2_y_centre = true; //[true, false]
+cust_text2_thickness = 2.00; //0.01
+cust_text2_mode = "emboss"; //[emboss, engrave]
+cust_text2_font         = "Liberation Mono:style=Bold";
+//in MM
+cust_text2_size         = 25;
+//probably only for visulisation
+cust_text2_colour = "darkblue";
+cust_text2_rotation = 270;
+
+/* [Import image/STL] */
+import_show             = true; //[true, false]
+import_file             = "imports/biohazard.svg";
+//import type, stl / 3mf untested as yet
+import_type             = "svg"; //[svg, 3mf/stl]
+import_width            = 40;
+import_height           = 40;
+import_depth            = 1.0; //0.01
+import_offset_x         = 50;
+import_centre_x           = true; //[true, false]
+import_offset_y         = 100;
+import_centre_y           = true; //[true, false]
+import_offset_z         = 0;
+import_mode             = "engrave"; //[emboss, engrave]
+import_rotation         = 37;
+
 
 /* [Visualiaston] */
 //visualisation of innards
@@ -982,10 +1050,129 @@ module side_supports(which) {
     }        
 }
 
+module gen_text(
+    posx = 0, 
+    posy = 0,
+    posz = 0,
+    rotation = 0,
+    ttext = "",
+    tsize = 10,
+    tthickness = 1.0,
+    tfont = "Liberation Mono:style=Bold",
+    halign = "center",
+    valign = "center"
+) {
+    if (ttext != "") {
+        translate([posx, posy, posz-0.001]) {
+            rotate([0, 0, rotation]) {
+                linear_extrude(height = tthickness) {
+                    mirror([1, 0, 0]) {
+                        text(
+                            ttext,
+                            size = tsize * (25.4/72),
+                            font = tfont,
+                            halign = "center",
+                            valign = "center"
+                        );
+                    }
+                }
+            }
+        }
+    }
 
-module base_plate() {
-    translate([0,0,0])
-        cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
+}
+
+module import_file() {
+    target_width  = (import_width  > 0) ? import_width  : maxx  * 0.5;
+    target_height = (import_height > 0) ? import_height : maxy * 0.5;
+    target_depth  = (import_depth  > 0) ? import_depth  : 0.8;
+
+    x_pos = import_centre_x ? maxx / 2 : import_offset_x;
+    y_pos = import_centre_y ? maxy / 2 : import_offset_y;
+    z_pos = import_offset_z;
+    if (import_type == "svg") {
+        if (import_mode == "engrave") {
+            // Use a tiny overlap so CSG subtraction reliably intersects the panel volume.
+            translate([x_pos, y_pos, 0]) {//-target_depth
+                rotate([0, 0, import_rotation]) {
+                    linear_extrude(height = target_depth + 0.02) {
+                        resize([target_width, target_height], auto = true) {
+                            mirror([1, 0, 0]) {
+                                import(file = import_file, center = true);
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+                // Emboss out from the front face (y = -depth to 0).
+                translate([x_pos, y_pos, -target_depth]) {
+                    rotate([0, 0, import_rotation]) {
+                        linear_extrude(height = target_depth) {
+                            resize([target_width, target_height], auto = true) {
+                                mirror([1, 0, 0]) {
+                                    import(file = import_file, center = true);
+                                }
+                            }
+                        }
+                    }
+                }
+
+        }
+
+    } else { //3mf or stl
+            // STL/3MF: assumes mesh uses X=width, Z=height, Y=depth.
+            y_pos = (import_mode == "engrave") ? (target_depth / 2) : -(target_depth / 2);
+            translate([x_pos, y_pos, z_pos]) {
+                resize([target_width, target_depth, target_height], auto = false) {
+                    mirror([1, 0, 0]) {
+                        import(file = import_file, center = true);
+                    }
+                }
+            }
+
+
+    }
+}
+
+//base and top case plate section. can be customised on the top
+module base_plate(which = true) {
+    translate([0,0,0]) {
+        if (which) { //if base, just create the base
+            cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
+        } else { //top
+            posx1 = cust_text1_x_centre ? maxx / 2 : cust_text1_x;
+            posy1 = cust_text1_y_centre ? maxy / 2 : cust_text1_y;
+            posz1 = cust_text1_mode == "emboss" ? -cust_text1_thickness : 0;
+            posx2 = cust_text2_x_centre ? maxx / 2 : cust_text2_x;
+            posy2 = cust_text2_y_centre ? maxy / 2 : cust_text2_y;
+            posz2 = cust_text2_mode == "emboss" ? -cust_text2_thickness : 0;
+
+            difference() {
+                union() {
+                    cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
+                    if ((cust_text1_show) && (cust_text1_mode == "emboss")) {
+                        gen_text(posx = posx1, posy = posy1, posz = posz1, rotation = cust_text1_rotation, ttext = cust_text1, tsize = cust_text1_size, tfont = cust_text1_font, tthickness = cust_text1_thickness);
+                    }
+                    if ((cust_text2_show) && (cust_text2_mode == "emboss")) {
+                        gen_text(posx = posx2, posy = posy2, posz = posz2, rotation = cust_text2_rotation, ttext = cust_text2, tsize = cust_text2_size, tfont = cust_text2_font, tthickness = cust_text2_thickness);
+                    }
+                    if ((import_show) && (import_file != "") && (import_mode == "emboss")) {
+                        import_file();
+                    }
+                }
+                if ((cust_text1_show) && (cust_text1_mode == "engrave")) {
+                    gen_text(posx = posx1, posy = posy1, posz = posz1, rotation = cust_text1_rotation, ttext = cust_text1, tsize = cust_text1_size, tfont = cust_text1_font, tthickness = cust_text1_thickness);
+                }
+                if ((cust_text2_show) && (cust_text2_mode == "engrave")) {
+                    gen_text(posx = posx2, posy = posy2, posz = posz2, rotation = cust_text2_rotation, ttext = cust_text2, tsize = cust_text2_size, tfont = cust_text2_font, tthickness = cust_text2_thickness);
+                }
+                if ((import_show) && (import_file != "") && (import_mode == "engrave")) {
+                    import_file();
+                }
+            }
+        }
+    }
 }
 
 module base_latches_profile(which = true, inner = false) {
@@ -1076,7 +1263,7 @@ render() {
                 union() {
                     base_corners(which = true);
                     base_sides(which = true);
-                    base_plate();
+                    base_plate(which = true);
                     base_hinge(which = true, incl_foot = incl_foot);
                     side_supports(which = true);
                     base_latches(which = true);
@@ -1086,7 +1273,7 @@ render() {
                 union() {
                     base_corners(which = false);
                     base_sides(which = false);
-                    base_plate();
+                    base_plate(which = false);
                     base_hinge(which = false, addscrews = true, incl_foot = incl_foot);
                     base_latches(which = false);
                     side_supports(which = false);

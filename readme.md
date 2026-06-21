@@ -1,10 +1,10 @@
 ## Parameterized Rugged Case for OpenSCAD
 
-This project is a fully parametric rugged-style case designed in OpenSCAD.
+This project is a (mostly) fully parametric rugged-style case designed in OpenSCAD.
 You can generate a complete assembly for preview, or export individual printable parts such as:
 
-- base
-- top
+- base (with/without feet for standing on end)
+- top (w/wo feet and also you can put up to 2 lines of text and an SVG image on there, 3mf/stl may also work, but untested as of today)
 - latches
 - handle
 - seal
@@ -20,7 +20,7 @@ Anyway, I got to the point where I'd created the base, hinges, support ribs, and
 
 Sometime in 2024 I came back to it and started to un-frack it. But again, after a while I ran out of steam and still hadn't even created the latches.
 
-Then came 2026, I was designing a lunchbox (don't ask) and needed a case. Well, what do you know. I have one of those already - but it wasn't finished. Nevermind, I found a couple of other OpenSCAD rugged case designs online. Except they didn't fit my requirements, had their own issues I'd need to fix, and I just didn't want to accept defeat.
+Then came 2026, I was designing a lunchbox (don't ask) and needed a case. Well, what do you know. I have one of those already - but it wasn't finished. Nevermind, I found a couple of other OpenSCAD rugged case designs online. Except they didn't fit my requirements, had their own issues I'd need to fix, and I just didn't want to accept defeat. My choices were, fix my own, fix someone elses or use pre-modelled. Decided it probably wouldn't be hard to fix my own - what a fool!
 
 So I returned to this. I thought I could get co-pilot to do some jobs for me, but yeah-nah, co-pilot did its usual of turning a working model into pure trash. So into the dustbin of history that branch went. I had to do it myself.
 
@@ -32,6 +32,14 @@ At some point I need to look into the remaining hard coded parts, also look at s
 
 ## Preview
 
+## Test box (models are here for this)
+
+![p1](images/p1.jpg)
+
+![p2](images/p2.jpg)
+
+![p3](images/p3.jpg)
+
 ### Full Assembly
 
 ![Assembly view](images/assembly_view.png)
@@ -39,9 +47,18 @@ At some point I need to look into the remaining hard coded parts, also look at s
 ### Individual Parts
 
 ![Base part](images/base.png)
+
 ![Top part](images/top.png)
+
 ![Handle part](images/handle.png)
+
 ![Seal part](images/seal.png)
+
+![text](images/text_imports.png)
+
+![feet](images/feet.png)
+
+
 
 ## Quick Start
 
