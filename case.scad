@@ -24,7 +24,7 @@ as of 2026-06-20 the case is complete as is, but needs some hard-coded bits chan
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/21r89";
+version = "v0.1-2026/06/21r133";
 **/
 
 //use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -32,7 +32,7 @@ $fn = 32;
 
 //Choose part / Assembly view
 /* [Part Chooser] */
-run = "assembly"; //[assembly, base, top, latches, handle, seal, hinge_screw, latch_screw]
+run = "top"; //[assembly, base, top, latches, handle, seal, hinge_screw, latch_screw]
 //In Assembly view, show these parts
 show_base = true; //[true, false]
 show_top = true; //[true, false]
@@ -191,6 +191,25 @@ base_hinge_foot_len = 21;
 top_hinge_foot_thickness = 0;
 top_hinge_foot_len = 13;
 
+/* [Case top cusomisation] */
+maxx = corner_distance.x;
+maxy = corner_distance.y;
+echo (maxx);
+echo (maxy);
+cust_text1 = "hello world";
+//positioning
+cust_text1_x = 50; 
+cust_text1_x_centre = false; //[true, false]
+cust_text1_y = 100;
+cust_text1_y_centre = false; //[true, false]
+cust_text1_thickness = 0.05; //0.01
+cust_text1_mode = "engrave"; //[emboss, engrave]
+cust_text1_font         = "Liberation Mono:style=Bold";
+//in MM
+cust_text1_size         = 25;
+//probably only for visulisation
+cust_text1_colour = "darkblue";
+cust_text1_rotation = 270;
 /* [Visualiaston] */
 //visualisation of innards
 chopmodel = false; //[true, false];
@@ -983,9 +1002,52 @@ module side_supports(which) {
 }
 
 
-module base_plate() {
-    translate([0,0,0])
-        cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
+module base_plate(which = true) {
+    module gen_text() {
+        rotate([0, 0, cust_text1_rotation]) {
+            linear_extrude(height = cust_text1_thickness) {
+                mirror([1, 0, 0]) {
+                    color(cust_text1_colour) {
+                        text(
+                            cust_text1,
+                            size = cust_text1_size * (25.4/72),
+                            font = cust_text1_font,
+                            halign = "center",
+                            valign = "center"
+                        );
+                    }
+                }
+            }
+        }
+
+
+    }
+
+    translate([0,0,0]) {
+        if (which) { //if base, just create the base
+            cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
+        } else { //top
+            if (cust_text1 != "") {
+                if (cust_text1_mode == "engrave") {
+                    posx = cust_text1_x_centre ? maxx / 2 : cust_text1_x;
+                    posy = cust_text1_y_centre ? maxy / 2 : cust_text1_y;
+                    difference() {
+                        cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
+                        // Use a tiny overlap so CSG subtraction reliably intersects the panel volume.
+                        translate([posx, posy, -0.001]) {
+                            gen_text();
+                        }
+                    }
+                } else {
+                    // Emboss out from the front face (y = -depth to 0).
+                }
+
+
+            } else { //cust_text1 != ""
+                cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
+            }
+        }
+    }
 }
 
 module base_latches_profile(which = true, inner = false) {
@@ -1076,7 +1138,7 @@ render() {
                 union() {
                     base_corners(which = true);
                     base_sides(which = true);
-                    base_plate();
+                    base_plate(which = true);
                     base_hinge(which = true, incl_foot = incl_foot);
                     side_supports(which = true);
                     base_latches(which = true);
@@ -1086,7 +1148,7 @@ render() {
                 union() {
                     base_corners(which = false);
                     base_sides(which = false);
-                    base_plate();
+                    base_plate(which = false);
                     base_hinge(which = false, addscrews = true, incl_foot = incl_foot);
                     base_latches(which = false);
                     side_supports(which = false);
