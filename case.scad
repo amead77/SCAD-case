@@ -24,7 +24,7 @@ as of 2026-06-20 the case is complete as is, but needs some hard-coded bits chan
 /**
 //next 2 lines used only by my 'on save' script. can be ignored otherwise.
 //AUTO-V
-version = "v0.1-2026/06/21r216";
+version = "v0.1-2026/06/21r272";
 **/
 
 //use </home/adam/Documents/Programming/SCAD-lib/mainlib.scad>;
@@ -228,6 +228,19 @@ cust_text2_size         = 25;
 //probably only for visulisation
 cust_text2_colour = "darkblue";
 cust_text2_rotation = 270;
+
+/* [Import image/STL] */
+import_show             = true; //[true, false]
+import_file             = "imports/Biohazard_symbol.svg";
+import_type             = "svg"; //[svg, 3mf, stl]
+import_width            = 40;
+import_height           = 40;
+import_depth            = 1.0; //0.01
+import_offset_x         = 50;
+import_offset_y         = 0;
+import_offset_z         = 0;
+import_mode             = "engrave"; //[emboss, engrave]
+import_rotation         = 0;
 
 
 /* [Visualiaston] */
@@ -1021,41 +1034,80 @@ module side_supports(which) {
     }        
 }
 
-
-module base_plate(which = true) {
-
-    module gen_text(
-        posx = 0, 
-        posy = 0,
-        posz = 0,
-        rotation = 0,
-        ttext = "",
-        tsize = 10,
-        tthickness = 1.0,
-        tfont = "Liberation Mono:style=Bold",
-        halign = "center",
-        valign = "center"
-    ) {
-        if (ttext != "") {
-            translate([posx, posy, posz-0.001]) {
-                rotate([0, 0, rotation]) {
-                    linear_extrude(height = tthickness) {
-                        mirror([1, 0, 0]) {
-                            text(
-                                ttext,
-                                size = tsize * (25.4/72),
-                                font = tfont,
-                                halign = "center",
-                                valign = "center"
-                            );
-                        }
+module gen_text(
+    posx = 0, 
+    posy = 0,
+    posz = 0,
+    rotation = 0,
+    ttext = "",
+    tsize = 10,
+    tthickness = 1.0,
+    tfont = "Liberation Mono:style=Bold",
+    halign = "center",
+    valign = "center"
+) {
+    if (ttext != "") {
+        translate([posx, posy, posz-0.001]) {
+            rotate([0, 0, rotation]) {
+                linear_extrude(height = tthickness) {
+                    mirror([1, 0, 0]) {
+                        text(
+                            ttext,
+                            size = tsize * (25.4/72),
+                            font = tfont,
+                            halign = "center",
+                            valign = "center"
+                        );
                     }
                 }
             }
         }
-
     }
 
+}
+
+module import_file() {
+    target_width  = (import_width  > 0) ? import_width  : maxx  * 0.5;
+    target_height = (import_height > 0) ? import_height : maxy * 0.5;
+    target_depth  = (import_depth  > 0) ? import_depth  : 0.8;
+
+    x_pos = import_offset_x;
+    y_pos = import_offset_y;
+    z_pos = import_offset_z;
+    if (import_type == "svg") {
+        if (import_mode == "engrave") {
+            // Use a tiny overlap so CSG subtraction reliably intersects the panel volume.
+            translate([x_pos, y_pos, 0]) {//-target_depth
+                rotate([0, 0, import_rotation]) {
+                    linear_extrude(height = target_depth + 0.02) {
+                        resize([target_width, target_height], auto = true) {
+                            mirror([1, 0, 0]) {
+                                import(file = import_file, center = true);
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+                // Emboss out from the front face (y = -depth to 0).
+                translate([x_pos, y_pos, -target_depth]) {
+                    rotate([0, 0, import_rotation]) {
+                        linear_extrude(height = target_depth) {
+                            resize([target_width, target_height], auto = true) {
+                                mirror([1, 0, 0]) {
+                                    import(file = import_file, center = true);
+                                }
+                            }
+                        }
+                    }
+                }
+
+        }
+    }
+}
+
+//base and top case plate section. can be customised on the top
+module base_plate(which = true) {
     translate([0,0,0]) {
         if (which) { //if base, just create the base
             cube([corner_distance.x, corner_distance.y, base_thickness], center = false);
@@ -1076,6 +1128,9 @@ module base_plate(which = true) {
                     if ((cust_text2_show) && (cust_text2_mode == "emboss")) {
                         gen_text(posx = posx2, posy = posy2, posz = posz2, rotation = cust_text2_rotation, ttext = cust_text2, tsize = cust_text2_size, tfont = cust_text2_font, tthickness = cust_text2_thickness);
                     }
+                    if ((import_show) && (import_file != "") && (import_mode == "emboss")) {
+                        import_file();
+                    }
                 }
                 if ((cust_text1_show) && (cust_text1_mode == "engrave")) {
                     gen_text(posx = posx1, posy = posy1, posz = posz1, rotation = cust_text1_rotation, ttext = cust_text1, tsize = cust_text1_size, tfont = cust_text1_font, tthickness = cust_text1_thickness);
@@ -1083,7 +1138,9 @@ module base_plate(which = true) {
                 if ((cust_text2_show) && (cust_text2_mode == "engrave")) {
                     gen_text(posx = posx2, posy = posy2, posz = posz2, rotation = cust_text2_rotation, ttext = cust_text2, tsize = cust_text2_size, tfont = cust_text2_font, tthickness = cust_text2_thickness);
                 }
-
+                if ((import_show) && (import_file != "") && (import_mode == "engrave")) {
+                    import_file();
+                }
             }
         }
     }
